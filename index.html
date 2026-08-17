@@ -564,6 +564,7 @@ async function mapWithConcurrency(items, limit, fn) {
     while (idx < items.length) {
       const current = idx++;
       results[current] = await fn(items[current], current);
+      await sleep(150); // small gap between requests so we don't burst the Gmail quota
     }
   }
   const workers = Array.from({ length: Math.min(limit, items.length) }, worker);
@@ -643,7 +644,7 @@ async function runDigest() {
       renderList();
       return;
     }
-    const details = await mapWithConcurrency(msgRefs, 3, (m) => fetchMessageDetail(m.id));
+    const details = await mapWithConcurrency(msgRefs, 2, (m) => fetchMessageDetail(m.id));
     const summaries = await summarizeBatch(details);
     const byId = Object.fromEntries(summaries.map((s) => [s.id, s]));
 
@@ -685,7 +686,7 @@ async function runOverview(view) {
       return;
     }
 
-    const details = await mapWithConcurrency(msgRefs, 3, (m) => fetchMessageDetail(m.id));
+    const details = await mapWithConcurrency(msgRefs, 2, (m) => fetchMessageDetail(m.id));
     const overview = await summarizeOverview(details, timeframeLabel);
     overview.totalCount = details.length;
     overviewCache[view] = overview;
