@@ -344,7 +344,7 @@
 <div class="wrap">
 
   <div class="masthead">
-    <div class="kicker">עלון אישי · יוצא לאור מדי רענון</div>
+    <div class="kicker">עלון אישי</div>
     <h1>תקציר הדואר</h1>
     <div class="meta-row">
       <span id="todayLabel">—</span>
@@ -355,7 +355,6 @@
   <div class="toolbar">
     <div id="accountArea" class="account-row"></div>
     <div style="display:flex; gap:8px;">
-      <button id="refreshBtn" class="btn ghost" style="display:none;">רענון</button>
       <button id="signInBtn" class="btn primary">התחברות עם Gmail</button>
       <button id="signOutBtn" class="btn ghost" style="display:none;">התנתקות</button>
     </div>
@@ -430,7 +429,6 @@ const overviewCache = { weekly: null, monthly: null };
 const $ = (sel) => document.querySelector(sel);
 const signInBtn = $("#signInBtn");
 const signOutBtn = $("#signOutBtn");
-const refreshBtn = $("#refreshBtn");
 const accountArea = $("#accountArea");
 const mainArea = $("#mainArea");
 const errorArea = $("#errorArea");
@@ -445,6 +443,9 @@ todayLabel.textContent = new Date().toLocaleDateString("he-IL", {
 
 signInBtn.disabled = !isConfigured();
 
+const AUTH_STORAGE_KEY = "mailDigestLastEmail";
+let silentAttemptInProgress = false;
+
 /* ============================================================
    GOOGLE SIGN-IN (Google Identity Services token client)
    ============================================================ */
@@ -454,19 +455,23 @@ function initGoogle() {
     client_id: CONFIG.GOOGLE_CLIENT_ID,
     scope: CONFIG.GMAIL_SCOPE,
     callback: async (resp) => {
+      const wasSilent = silentAttemptInProgress;
+      silentAttemptInProgress = false;
       if (resp.error) {
-        showError("ההתחברות לגוגל נכשלה: " + resp.error);
+        // A failed *silent* attempt just means "not signed in" — show the normal button, no error.
+        if (!wasSilent) showError("ההתחברות לגוגל נכשלה: " + resp.error);
         return;
       }
       accessToken = resp.access_token;
-      signInBtn.style.display = "none";
-      signOutBtn.style.display = "inline-block";
-      refreshBtn.style.display = "inline-block";
-      periodTabs.style.display = "flex";
-      await loadProfile();
-      await switchView("daily");
+      await onSignedIn();
     },
   });
+
+  // If we were signed in before on this browser, try to reconnect silently — no click needed.
+  if (localStorage.getItem(AUTH_STORAGE_KEY)) {
+    silentAttemptInProgress = true;
+    tokenClient.requestAccessToken({ prompt: "" });
+  }
 }
 window.addEventListener("load", () => {
   const t = setInterval(() => {
@@ -479,6 +484,14 @@ signInBtn.addEventListener("click", () => {
   tokenClient.requestAccessToken();
 });
 
+async function onSignedIn() {
+  signInBtn.style.display = "none";
+  signOutBtn.style.display = "inline-block";
+  periodTabs.style.display = "flex";
+  await loadProfile();
+  await switchView("daily");
+}
+
 signOutBtn.addEventListener("click", () => {
   if (accessToken && window.google?.accounts?.oauth2) {
     google.accounts.oauth2.revoke(accessToken, () => {});
@@ -488,19 +501,14 @@ signOutBtn.addEventListener("click", () => {
   overviewCache.weekly = null;
   overviewCache.monthly = null;
   activeView = "daily";
+  localStorage.removeItem(AUTH_STORAGE_KEY);
   accountArea.innerHTML = "";
   signInBtn.style.display = "inline-block";
   signOutBtn.style.display = "none";
-  refreshBtn.style.display = "none";
   filtersBar.style.display = "none";
   periodTabs.style.display = "none";
   countLabel.textContent = "אין מיילים עדיין";
   renderIdle();
-});
-
-refreshBtn.addEventListener("click", () => {
-  if (activeView === "daily") { runDigest(); }
-  else { overviewCache[activeView] = null; runOverview(activeView); }
 });
 
 async function loadProfile() {
@@ -509,7 +517,9 @@ async function loadProfile() {
       headers: { Authorization: "Bearer " + accessToken },
     });
     const data = await r.json();
-    accountArea.innerHTML = `<span>מחובר כ-${escapeHtml(data.emailAddress || "")}</span>`;
+    const email = data.emailAddress || "";
+    accountArea.innerHTML = `<span>מחובר כ-${escapeHtml(email)}</span>`;
+    if (email) localStorage.setItem(AUTH_STORAGE_KEY, email);
   } catch { /* non-fatal */ }
 }
 
@@ -635,7 +645,6 @@ async function summarizeOverview(emails, timeframeLabel) {
 async function runDigest() {
   clearError();
   renderSkeleton();
-  refreshBtn.disabled = true;
   try {
     const msgRefs = await fetchMessageList(null, CONFIG.MAX_EMAILS);
     if (msgRefs.length === 0) {
@@ -663,7 +672,6 @@ async function runDigest() {
     showError("משהו השתבש בבניית התקציר: " + err.message);
     mainArea.innerHTML = "";
   } finally {
-    refreshBtn.disabled = false;
   }
 }
 
@@ -673,7 +681,6 @@ async function runDigest() {
 async function runOverview(view) {
   clearError();
   renderSkeleton();
-  refreshBtn.disabled = true;
   try {
     const days = view === "weekly" ? 7 : 30;
     const timeframeLabel = view === "weekly" ? "השבוע האחרון" : "החודש האחרון";
@@ -695,7 +702,6 @@ async function runOverview(view) {
     showError("משהו השתבש בבניית הסקירה: " + err.message);
     mainArea.innerHTML = "";
   } finally {
-    refreshBtn.disabled = false;
   }
 }
 
