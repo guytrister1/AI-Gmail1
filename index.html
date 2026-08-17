@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תקציר הדואר | Mail Digest</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Assistant:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+  :root{
+    --ink:#1C2431;
+    --ink-soft:#3C4658;
+    --paper:#EAE6DC;
+    --paper-raised:#F4F1E9;
+    --paper-line:#C9C2AE;
+    --gold:#B4872A;
+    --gold-deep:#8C6A20;
+    --red-stamp:#8E2F2F;
+    --sage:#4F6B5B;
+    --blue-stamp:#3E5C82;
+    --grey-stamp:#6B6459;
+    --shadow: 0 10px 30px -12px rgba(28,36,49,0.35);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(180,135,42,0.10), transparent 60%),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Assistant',sans-serif;
+    min-height:100vh;
+  }
+  /* faint paper texture via repeating lines */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(28,36,49,0.025) 0px, rgba(28,36,49,0.025) 1px, transparent 1px, transparent 34px);
+    pointer-events:none;
+    z-index:0;
+  }
+  .wrap{
+    position:relative; z-index:1;
+    max-width:880px;
+    margin:0 auto;
+    padding:28px 20px 80px;
+  }
+
+  /* ---------- MASTHEAD ---------- */
+  .masthead{
+    text-align:center;
+    padding-bottom:18px;
+    border-bottom:3px double var(--ink);
+    margin-bottom:6px;
+  }
+  .masthead .kicker{
+    font-size:12px;
+    letter-spacing:.22em;
+    color:var(--gold-deep);
+    font-weight:700;
+    text-transform:uppercase;
+  }
+  .masthead h1{
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:900;
+    font-size:clamp(34px, 6vw, 54px);
+    margin:6px 0 8px;
+    letter-spacing:-0.5px;
+  }
+  .masthead .meta-row{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    flex-wrap:wrap;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .masthead .meta-row span:not(:last-child)::after{
+    content:"·"; margin-inline-start:10px; color:var(--paper-line);
+  }
+
+  /* ---------- TOOLBAR ---------- */
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; flex-wrap:wrap;
+    padding:16px 0 10px;
+  }
+  .btn{
+    font-family:'Assistant',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    border:1.5px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    padding:9px 18px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .btn:hover{ background:var(--ink); color:var(--paper-raised); }
+  .btn:active{ transform:translateY(1px); }
+  .btn.primary{ background:var(--ink); color:var(--paper-raised); }
+  .btn.primary:hover{ background:var(--gold-deep); border-color:var(--gold-deep); }
+  .btn.ghost{ border-color:var(--paper-line); color:var(--ink-soft); font-weight:600; }
+  .btn.ghost:hover{ background:var(--ink-soft); border-color:var(--ink-soft); }
+  .btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .btn:disabled:hover{ background:transparent; color:var(--ink); }
+
+  .account-row{ display:flex; align-items:center; gap:10px; font-size:13px; color:var(--ink-soft);}
+  .account-row img{ width:26px; height:26px; border-radius:50%; border:1px solid var(--paper-line); }
+
+  /* ---------- CHIPS / SEARCH ---------- */
+  .filters{
+    display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    padding:8px 0 20px;
+    border-bottom:1px solid var(--paper-line);
+  }
+  .chip{
+    font-size:12.5px; font-weight:700;
+    padding:6px 14px;
+    border-radius:999px;
+    border:1.3px solid var(--paper-line);
+    background:var(--paper-raised);
+    color:var(--ink-soft);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .chip.active{ background:var(--ink); border-color:var(--ink); color:var(--paper-raised); }
+  .search-box{
+    margin-inline-start:auto;
+    display:flex; align-items:center;
+    border-bottom:1.5px solid var(--ink);
+    padding:2px 4px;
+    min-width:160px;
+    flex:1 1 180px;
+    max-width:260px;
+  }
+  .search-box input{
+    border:none; background:transparent; outline:none;
+    font-family:'Assistant',sans-serif; font-size:13.5px;
+    padding:6px 4px; width:100%; color:var(--ink);
+  }
+
+  /* ---------- STATES ---------- */
+  .state-panel{
+    text-align:center;
+    padding:70px 20px;
+    color:var(--ink-soft);
+  }
+  .state-panel h3{
+    font-family:'Frank Ruhl Libre', serif;
+    font-size:22px; color:var(--ink); margin:0 0 8px;
+  }
+  .state-panel p{ font-size:14px; line-height:1.7; max-width:440px; margin:0 auto 18px; }
+
+  .setup-box{
+    text-align:right;
+    max-width:520px; margin:18px auto 0;
+    background:var(--paper-raised);
+    border:1px solid var(--paper-line);
+    border-radius:4px;
+    padding:16px 18px;
+    font-size:13px; line-height:1.9; color:var(--ink-soft);
+  }
+  .setup-box code{
+    background:rgba(28,36,49,0.07);
+    padding:1px 6px; border-radius:3px;
+    font-size:12px; color:var(--ink);
+  }
+  .setup-box b{ color:var(--ink); }
+
+  .error-banner{
+    background:#F4E4E0; border:1px solid var(--red-stamp);
+    color:var(--red-stamp); font-size:13px; font-weight:600;
+    padding:12px 16px; border-radius:4px; margin:14px 0;
+  }
+
+  /* ---------- SKELETON ---------- */
+  .skeleton-card{
+    height:96px; border-radius:4px;
+    background:linear-gradient(100deg, var(--paper-raised) 30%, #fff 50%, var(--paper-raised) 70%);
+    background-size:220% 100%;
+    animation:shimmer 1.4s infinite;
+    margin-bottom:14px;
+    border:1px solid var(--paper-line);
+  }
+  @keyframes shimmer{ 0%{background-position:150% 0;} 100%{background-position:-50% 0;} }
+
+  /* ---------- CARDS ---------- */
+  .digest-list{ padding-top:18px; }
+  .card{
+    position:relative;
+    display:flex; gap:16px;
+    align-items:flex-start;
+    background:var(--paper-raised);
+    border:1px solid var(--paper-line);
+    border-radius:4px;
+    padding:16px 18px;
+    margin-bottom:14px;
+    box-shadow:var(--shadow);
+    animation:riseIn .35s ease both;
+  }
+  @keyframes riseIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:none; } }
+
+  .stamp{
+    flex:0 0 auto;
+    width:64px; height:64px;
+    border-radius:50%;
+    border:2px dashed currentColor;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center;
+    transform:rotate(-9deg);
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:700;
+    font-size:10.5px;
+    letter-spacing:.03em;
+    line-height:1.2;
+    padding:4px;
+  }
+  .stamp.p1{ color:var(--red-stamp); }
+  .stamp.p2{ color:var(--gold-deep); }
+  .stamp.p3{ color:var(--grey-stamp); }
+
+  .card-body{ flex:1 1 auto; min-width:0; }
+  .card-top{
+    display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .card-subject{
+    font-family:'Frank Ruhl Libre', serif;
+    font-weight:700;
+    font-size:17px;
+    color:var(--ink);
+  }
+  .card-time{ font-size:11.5px; color:var(--ink-soft); white-space:nowrap; }
+  .card-from{
+    font-size:12.5px; color:var(--ink-soft); margin-top:2px;
+    display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+  }
+  .cat-tag{
+    font-size:10.5px; font-weight:700; letter-spacing:.03em;
+    padding:2px 8px; border-radius:999px;
+    border:1px solid currentColor;
+  }
+  .cat-חשוב{ color:var(--red-stamp); }
+  .cat-עדכון{ color:var(--blue-stamp); }
+  .cat-פרסומת{ color:var(--gold-deep); }
+  .cat-רשת.חברתית, .cat-רשת-חברתית{ color:var(--sage); }
+  .cat-אחר{ color:var(--grey-stamp); }
+
+  .card-summary{
+    font-size:14px; line-height:1.75; color:var(--ink); margin-top:8px;
+  }
+  .card-actions{ margin-top:10px; }
+  .card-actions a{
+    font-size:12.5px; font-weight:700; color:var(--ink);
+    text-decoration:none; border-bottom:1.5px solid var(--gold);
+    padding-bottom:1px;
+  }
+  .card-actions a:hover{ color:var(--gold-deep); }
+
+  footer.colophon{
+    text-align:center; margin-top:40px; padding-top:16px;
+    border-top:1px solid var(--paper-line);
+    font-size:11.5px; color:var(--ink-soft); letter-spacing:.04em;
+  }
+
+  @media (max-width:520px){
+    .stamp{ width:52px; height:52px; font-size:9px; }
+    .card{ padding:14px; gap:12px; }
+    .search-box{ max-width:none; order:99; flex-basis:100%; }
+  }
+
+  :focus-visible{ outline:2px solid var(--gold-deep); outline-offset:2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="kicker">עלון אישי · יוצא לאור מדי רענון</div>
+    <h1>תקציר הדואר</h1>
+    <div class="meta-row">
+      <span id="todayLabel">—</span>
+      <span id="countLabel">אין מיילים עדיין</span>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div id="accountArea" class="account-row"></div>
+    <div style="display:flex; gap:8px;">
+      <button id="refreshBtn" class="btn ghost" style="display:none;">רענון</button>
+      <button id="signInBtn" class="btn primary">התחברות עם Gmail</button>
+      <button id="signOutBtn" class="btn ghost" style="display:none;">התנתקות</button>
+    </div>
+  </div>
+
+  <div id="filters" class="filters" style="display:none;">
+    <button class="chip active" data-cat="הכל">הכל</button>
+    <button class="chip" data-cat="חשוב">חשוב</button>
+    <button class="chip" data-cat="עדכון">עדכונים</button>
+    <button class="chip" data-cat="פרסומת">פרסומות</button>
+    <button class="chip" data-cat="רשת חברתית">רשתות חברתיות</button>
+    <button class="chip" data-cat="אחר">אחר</button>
+    <div class="search-box">
+      <input id="searchInput" type="text" placeholder="חיפוש בנושא, שולח או סיכום…">
+    </div>
+  </div>
+
+  <div id="errorArea"></div>
+  <div id="mainArea">
+    <div class="state-panel" id="idleState">
+      <h3>הגיליון עוד לא נפתח</h3>
+      <p>התחברו עם חשבון ה-Gmail שלכם כדי לקבל תקציר AI קצר ומעוצב של המיילים האחרונים בתיבה — מה חשוב, מה עדכון, ומה אפשר לדלג עליו.</p>
+      <div class="setup-box" id="setupBox"></div>
+    </div>
+  </div>
+
+  <footer class="colophon">תקציר הדואר · נבנה עבורך · הנתונים נשארים בין הדפדפן שלך, גוגל, וה-Worker בלבד</footer>
+</div>
+
+<script>
+/* ============================================================
+   CONFIG — יש להשלים לפני שימוש אמיתי
+   ============================================================ */
+const CONFIG = {
+  // Google Cloud Console -> APIs & Services -> Credentials -> OAuth Client ID (Web application)
+  // הוסיפו כ-Authorized JavaScript origin את הכתובת שבה הדף מתארח (למשל https://guytrister1.github.io)
+  // וודאו ש-Gmail API מופעל בפרויקט.
+  GOOGLE_CLIENT_ID: "YOUR_GOOGLE_CLIENT_ID_HERE.apps.googleusercontent.com",
+
+  // כתובת ה-Cloudflare Worker (ראו mail-digest-worker.js) אחרי פריסה
+  WORKER_URL: "https://YOUR_WORKER_URL_HERE.workers.dev",
+
+  GMAIL_SCOPE: "https://www.googleapis.com/auth/gmail.readonly",
+  MAX_EMAILS: 20,
+};
+
+const isConfigured = () =>
+  !CONFIG.GOOGLE_CLIENT_ID.includes("YOUR_GOOGLE_CLIENT_ID_HERE") &&
+  !CONFIG.WORKER_URL.includes("YOUR_WORKER_URL_HERE");
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let accessToken = null;
+let tokenClient = null;
+let allItems = [];       // merged gmail + AI summary data
+let activeCategory = "הכל";
+let searchTerm = "";
+
+/* ============================================================
+   DOM refs
+   ============================================================ */
+const $ = (sel) => document.querySelector(sel);
+const signInBtn = $("#signInBtn");
+const signOutBtn = $("#signOutBtn");
+const refreshBtn = $("#refreshBtn");
+const accountArea = $("#accountArea");
+const mainArea = $("#mainArea");
+const errorArea = $("#errorArea");
+const filtersBar = $("#filters");
+const countLabel = $("#countLabel");
+const todayLabel = $("#todayLabel");
+const setupBox = $("#setupBox");
+
+todayLabel.textContent = new Date().toLocaleDateString("he-IL", {
+  weekday: "long", year: "numeric", month: "long", day: "numeric",
+});
+
+/* ============================================================
+   SETUP / CONFIG GUIDANCE
+   ============================================================ */
+function renderSetupGuidance() {
+  if (isConfigured()) { setupBox.style.display = "none"; signInBtn.disabled = false; return; }
+  signInBtn.disabled = true;
+  setupBox.style.display = "block";
+  setupBox.innerHTML = `
+    <b>כדי להפעיל את המערכת צריך להשלים הגדרה חד-פעמית:</b><br><br>
+    1) ליצור <b>OAuth Client ID</b> ב-Google Cloud Console (סוג Web application), להפעיל את <b>Gmail API</b>,
+    ולהוסיף את כתובת האתר כ-Authorized JavaScript origin.<br>
+    2) לפרוס את הקובץ <code>mail-digest-worker.js</code> כ-Cloudflare Worker, ולהגדיר לו סוד בשם
+    <code>ANTHROPIC_API_KEY</code>.<br>
+    3) להדביק את שני הערכים בתוך אובייקט <code>CONFIG</code> בראש הקוד (<code>GOOGLE_CLIENT_ID</code> ו-<code>WORKER_URL</code>).<br><br>
+    כרגע כפתור ההתחברות מנוטרל כי הערכים עדיין placeholder.
+  `;
+}
+renderSetupGuidance();
+
+/* ============================================================
+   GOOGLE SIGN-IN (Google Identity Services token client)
+   ============================================================ */
+function initGoogle() {
+  if (!window.google || !isConfigured()) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CONFIG.GOOGLE_CLIENT_ID,
+    scope: CONFIG.GMAIL_SCOPE,
+    callback: async (resp) => {
+      if (resp.error) {
+        showError("ההתחברות לגוגל נכשלה: " + resp.error);
+        return;
+      }
+      accessToken = resp.access_token;
+      signInBtn.style.display = "none";
+      signOutBtn.style.display = "inline-block";
+      refreshBtn.style.display = "inline-block";
+      filtersBar.style.display = "flex";
+      await loadProfile();
+      await runDigest();
+    },
+  });
+}
+window.addEventListener("load", () => {
+  // GIS script loads async — poll briefly until available
+  const t = setInterval(() => {
+    if (window.google?.accounts?.oauth2) { initGoogle(); clearInterval(t); }
+  }, 150);
+});
+
+signInBtn.addEventListener("click", () => {
+  if (!tokenClient) { showError("Google Sign-In עדיין נטען, נסו שוב בעוד רגע."); return; }
+  tokenClient.requestAccessToken();
+});
+
+signOutBtn.addEventListener("click", () => {
+  if (accessToken && window.google?.accounts?.oauth2) {
+    google.accounts.oauth2.revoke(accessToken, () => {});
+  }
+  accessToken = null;
+  allItems = [];
+  accountArea.innerHTML = "";
+  signInBtn.style.display = "inline-block";
+  signOutBtn.style.display = "none";
+  refreshBtn.style.display = "none";
+  filtersBar.style.display = "none";
+  countLabel.textContent = "אין מיילים עדיין";
+  renderIdle();
+});
+
+refreshBtn.addEventListener("click", () => runDigest());
+
+async function loadProfile() {
+  try {
+    const r = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+      headers: { Authorization: "Bearer " + accessToken },
+    });
+    const data = await r.json();
+    accountArea.innerHTML = `<span>מחובר כ-${escapeHtml(data.emailAddress || "")}</span>`;
+  } catch { /* non-fatal */ }
+}
+
+/* ============================================================
+   GMAIL FETCH
+   ============================================================ */
+async function fetchMessageList() {
+  const r = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=${CONFIG.MAX_EMAILS}&labelIds=INBOX`,
+    { headers: { Authorization: "Bearer " + accessToken } }
+  );
+  if (!r.ok) throw new Error("gmail_list_failed_" + r.status);
+  const data = await r.json();
+  return data.messages || [];
+}
+
+async function fetchMessageDetail(id) {
+  const url =
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}` +
+    `?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`;
+  const r = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
+  if (!r.ok) throw new Error("gmail_detail_failed_" + r.status);
+  const data = await r.json();
+  const headers = {};
+  (data.payload?.headers || []).forEach((h) => (headers[h.name] = h.value));
+  return {
+    id: data.id,
+    threadId: data.threadId,
+    subject: headers.Subject || "(ללא נושא)",
+    from: headers.From || "",
+    date: headers.Date || "",
+    snippet: data.snippet || "",
+    unread: (data.labelIds || []).includes("UNREAD"),
+  };
+}
+
+/* ============================================================
+   AI SUMMARIZATION VIA WORKER
+   ============================================================ */
+async function summarizeBatch(emails) {
+  const r = await fetch(CONFIG.WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emails: emails.map(({ id, from, subject, snippet }) => ({ id, from, subject, snippet })) }),
+  });
+  if (!r.ok) throw new Error("worker_failed_" + r.status);
+  const data = await r.json();
+  if (data.error) throw new Error("worker_error_" + data.error);
+  return data.summaries || [];
+}
+
+/* ============================================================
+   MAIN DIGEST PIPELINE
+   ============================================================ */
+async function runDigest() {
+  clearError();
+  renderSkeleton();
+  refreshBtn.disabled = true;
+  try {
+    const msgRefs = await fetchMessageList();
+    if (msgRefs.length === 0) {
+      allItems = [];
+      countLabel.textContent = "אין מיילים בתיבה";
+      renderList();
+      return;
+    }
+    const details = await Promise.all(msgRefs.map((m) => fetchMessageDetail(m.id)));
+    const summaries = await summarizeBatch(details);
+    const byId = Object.fromEntries(summaries.map((s) => [s.id, s]));
+
+    allItems = details
+      .map((d) => ({
+        ...d,
+        summary: byId[d.id]?.summary || d.snippet,
+        category: byId[d.id]?.category || "אחר",
+        priority: byId[d.id]?.priority || 2,
+      }))
+      .sort((a, b) => a.priority - b.priority);
+
+    countLabel.textContent = `${allItems.length} מיילים בתקציר`;
+    renderList();
+  } catch (err) {
+    showError("משהו השתבש בבניית התקציר: " + err.message);
+    mainArea.innerHTML = "";
+  } finally {
+    refreshBtn.disabled = false;
+  }
+}
+
+/* ============================================================
+   RENDERING
+   ============================================================ */
+function renderIdle() {
+  mainArea.innerHTML = `
+    <div class="state-panel" id="idleState">
+      <h3>הגיליון עוד לא נפתח</h3>
+      <p>התחברו עם חשבון ה-Gmail שלכם כדי לקבל תקציר AI קצר ומעוצב של המיילים האחרונים בתיבה — מה חשוב, מה עדכון, ומה אפשר לדלג עליו.</p>
+      <div class="setup-box" id="setupBox"></div>
+    </div>`;
+  renderSetupGuidance();
+}
+
+function renderSkeleton() {
+  let html = '<div class="digest-list">';
+  for (let i = 0; i < 6; i++) html += '<div class="skeleton-card"></div>';
+  html += "</div>";
+  mainArea.innerHTML = html;
+}
+
+function renderList() {
+  const filtered = allItems.filter((item) => {
+    const matchesCat = activeCategory === "הכל" || item.category === activeCategory;
+    const hay = (item.subject + " " + item.from + " " + item.summary).toLowerCase();
+    const matchesSearch = !searchTerm || hay.includes(searchTerm.toLowerCase());
+    return matchesCat && matchesSearch;
+  });
+
+  if (filtered.length === 0) {
+    mainArea.innerHTML = `
+      <div class="state-panel">
+        <h3>אין מיילים תואמים</h3>
+        <p>נסו לשנות את הסינון או את מונח החיפוש.</p>
+      </div>`;
+    return;
+  }
+
+  const cards = filtered.map(renderCard).join("");
+  mainArea.innerHTML = `<div class="digest-list">${cards}</div>`;
+}
+
+function renderCard(item) {
+  const pClass = "p" + item.priority;
+  const stampWord = item.priority === 1 ? "דחוף" : item.priority === 2 ? "לתשומת לב" : "לא דחוף";
+  const catClass = "cat-" + item.category.replace(/\s+/g, "-");
+  const fromName = escapeHtml((item.from || "").split("<")[0].trim().replace(/"/g, ""));
+  const timeAgo = formatTimeAgo(item.date);
+  const gmailLink = `https://mail.google.com/mail/u/0/#inbox/${item.threadId || item.id}`;
+
+  return `
+    <div class="card">
+      <div class="stamp ${pClass}">${stampWord}</div>
+      <div class="card-body">
+        <div class="card-top">
+          <div class="card-subject">${escapeHtml(item.subject)}</div>
+          <div class="card-time">${timeAgo}</div>
+        </div>
+        <div class="card-from">
+          <span>${fromName || "לא ידוע"}</span>
+          <span class="cat-tag ${catClass}">${escapeHtml(item.category)}</span>
+        </div>
+        <div class="card-summary">${escapeHtml(item.summary)}</div>
+        <div class="card-actions"><a href="${gmailLink}" target="_blank" rel="noopener">פתיחה ב-Gmail ←</a></div>
+      </div>
+    </div>`;
+}
+
+/* ============================================================
+   FILTER / SEARCH WIRING
+   ============================================================ */
+filtersBar.addEventListener("click", (e) => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  filtersBar.querySelectorAll(".chip").forEach((c) => c.classList.remove("active"));
+  chip.classList.add("active");
+  activeCategory = chip.dataset.cat;
+  renderList();
+});
+
+$("#searchInput").addEventListener("input", (e) => {
+  searchTerm = e.target.value;
+  renderList();
+});
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function showError(msg) {
+  errorArea.innerHTML = `<div class="error-banner">${escapeHtml(msg)}</div>`;
+}
+function clearError() { errorArea.innerHTML = ""; }
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (c) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function formatTimeAgo(dateStr) {
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "";
+  const diffMs = Date.now() - d.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "עכשיו";
+  if (mins < 60) return `לפני ${mins} דק׳`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `לפני ${hours} שע׳`;
+  const days = Math.floor(hours / 24);
+  if (days < 7) return `לפני ${days} ימים`;
+  return d.toLocaleDateString("he-IL", { day: "numeric", month: "short" });
+}
+</script>
+</body>
+</html>
