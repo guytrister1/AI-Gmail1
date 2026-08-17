@@ -399,7 +399,7 @@ const CONFIG = {
   WORKER_URL: "https://fragrant-frost-185c.ai-teacher1.workers.dev",
   GMAIL_SCOPE: "https://www.googleapis.com/auth/gmail.readonly",
   MAX_EMAILS: 20,
-  PERIOD_MAX_EMAILS: 40,
+  PERIOD_MAX_EMAILS: 25,
 };
 
 const isConfigured = () =>
@@ -577,8 +577,10 @@ async function fetchMessageDetail(id, attempt = 0) {
     `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}` +
     `?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`;
   const r = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
-  if (r.status === 429 && attempt < 4) {
-    await sleep(500 * Math.pow(2, attempt));
+  if (r.status === 429 && attempt < 6) {
+    const retryAfterHeader = Number(r.headers.get("Retry-After"));
+    const waitMs = retryAfterHeader ? retryAfterHeader * 1000 : 700 * Math.pow(2, attempt);
+    await sleep(waitMs);
     return fetchMessageDetail(id, attempt + 1);
   }
   if (!r.ok) throw new Error("gmail_detail_failed_" + r.status);
@@ -642,7 +644,7 @@ async function runDigest() {
       renderList();
       return;
     }
-    const details = await mapWithConcurrency(msgRefs, 6, (m) => fetchMessageDetail(m.id));
+    const details = await mapWithConcurrency(msgRefs, 3, (m) => fetchMessageDetail(m.id));
     const summaries = await summarizeBatch(details);
     const byId = Object.fromEntries(summaries.map((s) => [s.id, s]));
 
@@ -684,7 +686,7 @@ async function runOverview(view) {
       return;
     }
 
-    const details = await mapWithConcurrency(msgRefs, 6, (m) => fetchMessageDetail(m.id));
+    const details = await mapWithConcurrency(msgRefs, 3, (m) => fetchMessageDetail(m.id));
     const overview = await summarizeOverview(details, timeframeLabel);
     overview.totalCount = details.length;
     overviewCache[view] = overview;
