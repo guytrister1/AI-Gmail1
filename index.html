@@ -554,11 +554,33 @@ async function fetchMessageList(query, maxResults) {
   return data.messages || [];
 }
 
-async function fetchMessageDetail(id) {
+function sleep(ms) { return new Promise((res) => setTimeout(res, ms)); }
+
+// Runs `fn` over `items` with at most `limit` requests in flight at once —
+// avoids Gmail API 429s from firing too many parallel requests.
+async function mapWithConcurrency(items, limit, fn) {
+  const results = new Array(items.length);
+  let idx = 0;
+  async function worker() {
+    while (idx < items.length) {
+      const current = idx++;
+      results[current] = await fn(items[current], current);
+    }
+  }
+  const workers = Array.from({ length: Math.min(limit, items.length) }, worker);
+  await Promise.all(workers);
+  return results;
+}
+
+async function fetchMessageDetail(id, attempt = 0) {
   const url =
     `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}` +
     `?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date`;
   const r = await fetch(url, { headers: { Authorization: "Bearer " + accessToken } });
+  if (r.status === 429 && attempt < 4) {
+    await sleep(500 * Math.pow(2, attempt));
+    return fetchMessageDetail(id, attempt + 1);
+  }
   if (!r.ok) throw new Error("gmail_detail_failed_" + r.status);
   const data = await r.json();
   const headers = {};
@@ -620,7 +642,7 @@ async function runDigest() {
       renderList();
       return;
     }
-    const details = await Promise.all(msgRefs.map((m) => fetchMessageDetail(m.id)));
+    const details = await mapWithConcurrency(msgRefs, 6, (m) => fetchMessageDetail(m.id));
     const summaries = await summarizeBatch(details);
     const byId = Object.fromEntries(summaries.map((s) => [s.id, s]));
 
@@ -662,7 +684,7 @@ async function runOverview(view) {
       return;
     }
 
-    const details = await Promise.all(msgRefs.map((m) => fetchMessageDetail(m.id)));
+    const details = await mapWithConcurrency(msgRefs, 6, (m) => fetchMessageDetail(m.id));
     const overview = await summarizeOverview(details, timeframeLabel);
     overview.totalCount = details.length;
     overviewCache[view] = overview;
