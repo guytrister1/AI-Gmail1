@@ -885,6 +885,14 @@ window.addEventListener('keydown', e => {
   }
 });
 window.addEventListener('keyup', e => keys.delete(e.code));
+// Secret admin code: typing 1201 anywhere in the game (outside text fields) opens the admin panel
+let codeBuf = '';
+window.addEventListener('keydown', e => {
+  if (!P || !running || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) return;
+  if (!/^[0-9]$/.test(e.key)) { codeBuf = ''; return; }
+  codeBuf = (codeBuf + e.key).slice(-4);
+  if (codeBuf === '1201') { codeBuf = ''; openAdmin(); }
+});
 document.querySelectorAll('.dpad button').forEach(b => {
   const code = b.dataset.dir;
   const down = e => { e.preventDefault(); if (code === 'Action') tryInteract(); else { keys.add(code); player.target = null; } };
