@@ -78,7 +78,7 @@
   .swatches{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px 0 10px;}
   .swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .1s;}
   .swatch.active{border-color:var(--ink);transform:scale(1.15);}
-  #preview{display:block;margin:0 auto;}
+  #preview{display:block;margin:0 auto;width:200px;height:210px;}
   .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;}
   .chip{
     background:#eef0f7;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;border:none;
@@ -616,6 +616,54 @@ function avatarFilter(color) {
   const sat = Math.max(r, g, b) - Math.min(r, g, b);
   return `hue-rotate(${Math.round(hueOf(color) - BASE_HUE)}deg) saturate(${(1 + sat * 1.6).toFixed(2)})`;
 }
+// Worn items: each emoji is rendered once at high resolution, trimmed, and drawn sized to the head.
+// Units match the sprite drawn at AVATAR_H (head top at -120, head about 72 wide, eyes at -79).
+const EYES = { front: { x: 0, w: 62 }, fl: { x: -7, w: 52 }, fr: { x: 5, w: 52 }, left: { x: -18, w: 34 }, right: { x: 23, w: 34 } };
+const HAT_FIT = {
+  def: { x: 0, y: -104, w: 80 },
+  helmet: { x: 0, y: -100, w: 84, crop: 0.66 },
+  sunhat: { x: 0, y: -100, w: 88 },
+  tophat: { x: 0, y: -106, w: 70 },
+  crown: { x: 0, y: -110, w: 58 },
+  bow: { x: 20, y: -108, w: 40 },
+};
+const wornCache = {};
+function wornImg(id, crop = 1) {
+  const key = id + ':' + crop;
+  if (wornCache[key]) return wornCache[key];
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = '200px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  g.fillText(itemById(id).emoji, S / 2, S / 2 + 10);
+  const a = g.getImageData(0, 0, S, S).data;
+  let x0 = S, y0 = S, x1 = -1, y1 = -1;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) if (a[(y * S + x) * 4 + 3] > 8) {
+    if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+  }
+  if (x1 < 0) return null;
+  const out = document.createElement('canvas'); out.width = x1 - x0 + 1; out.height = Math.round((y1 - y0 + 1) * crop);
+  out.getContext('2d').drawImage(c, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
+  return (wornCache[key] = out);
+}
+// (x, y) is the item's center, or for hats the bottom edge that sits on the head. Returns the drawn top edge.
+function drawWorn(ctx, id, x, y, w, onHead, crop) {
+  const im = wornImg(id, crop);
+  if (!im) return y;
+  const h = im.height / im.width * w;
+  ctx.imageSmoothingQuality = 'high';
+  const top = onHead ? y - h : y - h / 2;
+  ctx.drawImage(im, x - w / 2, top, w, h);
+  return top;
+}
+// Give a canvas a backing store at the real on-screen resolution so nothing is upscaled and blurred.
+function fitCanvas(cv, cx, w, h) {
+  const r = cv.getBoundingClientRect();
+  const k = clamp(Math.min(r.width / w, r.height / h) * (window.devicePixelRatio || 1), 1, 3) || 1;
+  const bw = Math.round(w * k), bh = Math.round(h * k);
+  if (cv.width !== bw || cv.height !== bh) { cv.width = bw; cv.height = bh; }
+  cx.setTransform(bw / w, 0, 0, bh / h, 0, 0);
+}
 function drawAvatar(ctx, x, y, p, scale, dir, walkT, t, opts = {}) {
   const walking = walkT > 0;
   const bob = walking ? Math.abs(Math.sin(walkT * 12)) * 4 : Math.sin(t * 2.2) * 1.2;
@@ -635,17 +683,18 @@ function drawAvatar(ctx, x, y, p, scale, dir, walkT, t, opts = {}) {
     ctx.filter = 'none';
   }
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const eyeX = { front: 0, fl: -8, fr: 8, left: -16, right: 16 }[dir];
-  if (p.glasses && eyeX !== undefined) { ctx.font = '36px sans-serif'; ctx.fillText(itemById(p.glasses).emoji, eyeX, -78); }
-  if (p.hat) { ctx.font = '42px sans-serif'; ctx.fillText(itemById(p.hat).emoji, 0, -120); }
+  const eyes = EYES[dir];
+  if (p.glasses && eyes) drawWorn(ctx, p.glasses, eyes.x, -79, eyes.w);
+  let labelY = -148;
+  if (p.hat) { const f = HAT_FIT[p.hat] || HAT_FIT.def; labelY = Math.min(labelY, drawWorn(ctx, p.hat, f.x, f.y, f.w, true, f.crop) - 14); }
   ctx.rotate(-tilt);
   if (!opts.noName) {
     ctx.font = '700 13px Rubik, sans-serif';
     const label = p.name;
     const lw = ctx.measureText(label).width + 14;
     ctx.fillStyle = 'rgba(0,0,0,.55)';
-    roundRect(ctx, -lw / 2, -158, lw, 20, 10); ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.fillText(label, 0, -148);
+    roundRect(ctx, -lw / 2, labelY - 10, lw, 20, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(label, 0, labelY);
   }
   ctx.restore();
 }
@@ -666,6 +715,7 @@ function shade(hex, amt) {
 let loginColor = COLORS[0];
 const pv = $('#preview').getContext('2d');
 function renderPreview() {
+  fitCanvas($('#preview'), pv, 200, 210);
   pv.clearRect(0, 0, 200, 210);
   drawAvatar(pv, 100, 200, { name: $('#login-name').value.trim() || 'מיקמק', color: loginColor, hat: null, glasses: null }, 1.15, 'front', 0, performance.now() / 1000);
 }
@@ -900,6 +950,7 @@ function update(dt) {
    RENDER
    ============================================================ */
 function render() {
+  fitCanvas(canvas, ctx, W, H);
   ctx.clearRect(0, 0, W, H);
   BACKGROUNDS[loc](ctx, T);
   drawExits();
@@ -910,7 +961,7 @@ function render() {
   drawList.push({ y: player.y, fn: () => { const sc = 0.78 + (player.y - GROUND_TOP) / (GROUND_BOTTOM - GROUND_TOP) * 0.32; drawAvatar(ctx, player.x, player.y, P, sc, player.dir, player.walkT, T); } });
   drawList.sort((a, b) => a.y - b.y).forEach(d => d.fn());
   // bubbles on top
-  if (player.bubble && player.bubble.until > T) drawBubble(player.bubble.text, player.x, player.y - 168);
+  if (player.bubble && player.bubble.until > T) drawBubble(player.bubble.text, player.x, player.y - (P.hat ? 222 : 168));
   for (const t of currentThings()) if (t.kind === 'npc' && npcBubbles[t.id] && npcBubbles[t.id].until > T) drawBubble(npcBubbles[t.id].text, t.x, t.y - 100);
   if (placing) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, 0, W, 40); ctx.fillStyle = '#fff'; ctx.font = '700 18px Rubik'; ctx.textAlign = 'center'; ctx.fillText('מצב עיצוב: לחץ במקום שבו תרצה להניח את ' + itemById(placing).name, W / 2, 26); }
 }
