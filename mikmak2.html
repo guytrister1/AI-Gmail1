@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מיקמק 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#3b1d8f;
+    --bg2:#1a6fd6;
+    --card:#ffffff;
+    --ink:#22223b;
+    --muted:#6b6f85;
+    --line:#e3e6f0;
+    --yellow:#ffd23f;
+    --orange:#ff7a1a;
+    --green:#2ec27e;
+    --red:#e5484d;
+    --purple:#7c3aed;
+    --blue:#2b7cff;
+    --shadow:0 14px 40px -14px rgba(10,10,40,.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;}
+  body{
+    font-family:'Rubik',sans-serif;
+    color:var(--ink);
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  button{font-family:inherit;}
+  input{font-family:inherit;}
+  [hidden]{display:none !important;}
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    border:none;border-radius:14px;padding:10px 18px;font-weight:700;font-size:15px;
+    cursor:pointer;background:#eef0f7;color:var(--ink);
+    box-shadow:0 4px 0 #cfd3e0;transition:transform .08s ease,box-shadow .08s ease,filter .15s;
+    white-space:nowrap;
+  }
+  .btn:hover{filter:brightness(1.05);}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 #cfd3e0;}
+  .btn.primary{background:var(--orange);color:#fff;box-shadow:0 4px 0 #c75a0a;}
+  .btn.primary:active{box-shadow:0 1px 0 #c75a0a;}
+  .btn.green{background:var(--green);color:#fff;box-shadow:0 4px 0 #1f9460;}
+  .btn.green:active{box-shadow:0 1px 0 #1f9460;}
+  .btn.blue{background:var(--blue);color:#fff;box-shadow:0 4px 0 #1b56b8;}
+  .btn.blue:active{box-shadow:0 1px 0 #1b56b8;}
+  .btn.red{background:var(--red);color:#fff;box-shadow:0 4px 0 #a52f33;}
+  .btn.red:active{box-shadow:0 1px 0 #a52f33;}
+  .btn.small{padding:6px 12px;font-size:13px;border-radius:10px;box-shadow:0 3px 0 #cfd3e0;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;filter:none;}
+  .btn.icon{padding:8px 12px;font-size:16px;}
+
+  /* ---------- Login ---------- */
+  .screen{min-height:100vh;}
+  #login{display:flex;align-items:center;justify-content:center;padding:24px 16px;}
+  .login-card{
+    background:var(--card);border-radius:28px;padding:30px 28px;max-width:440px;width:100%;
+    box-shadow:var(--shadow);text-align:center;
+  }
+  .logo{
+    font-weight:900;font-size:56px;line-height:1;margin:0;
+    background:linear-gradient(90deg,var(--orange),var(--yellow),var(--green),var(--blue),var(--purple));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    letter-spacing:-1px;
+  }
+  .sub{color:var(--muted);margin:6px 0 20px;font-weight:500;}
+  .field{margin:14px 0;text-align:right;}
+  .field label{display:block;font-weight:700;font-size:14px;margin-bottom:6px;}
+  .field input{
+    width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:14px;font-size:16px;outline:none;
+  }
+  .field input:focus{border-color:var(--blue);}
+  .swatches{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px 0 10px;}
+  .swatch{width:34px;height:34px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:transform .1s;}
+  .swatch.active{border-color:var(--ink);transform:scale(1.15);}
+  #preview{display:block;margin:0 auto;}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:16px;}
+  .chip{
+    background:#eef0f7;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;border:none;
+  }
+  .chip:hover{background:#dfe3ef;}
+  .note{font-size:12px;color:var(--muted);margin-top:14px;}
+
+  /* ---------- Game ---------- */
+  #game{display:flex;flex-direction:column;align-items:center;padding:10px 12px 20px;gap:10px;}
+  .hud{
+    width:100%;max-width:960px;background:rgba(255,255,255,.95);border-radius:18px;padding:8px 14px;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;box-shadow:var(--shadow);
+  }
+  .hud-left{display:flex;align-items:center;gap:10px;min-width:200px;}
+  .hud-name{font-weight:900;font-size:16px;}
+  .lvl{
+    background:var(--purple);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:2px 10px;
+  }
+  .xpbar{width:120px;height:8px;background:#e9ebf3;border-radius:999px;overflow:hidden;}
+  .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--purple),var(--blue));width:0;transition:width .3s;}
+  .hud-center{font-weight:900;font-size:18px;color:var(--purple);}
+  .hud-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .coins{
+    background:var(--yellow);border-radius:999px;padding:6px 14px;font-weight:900;font-size:15px;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
+  }
+  .stage{
+    position:relative;width:100%;max-width:960px;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
+    box-shadow:var(--shadow);background:#000;user-select:none;
+  }
+  #world{width:100%;height:100%;display:block;cursor:pointer;touch-action:none;}
+  #fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s;}
+  #hint{
+    position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;
+    padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;
+    white-space:nowrap;
+  }
+  #hint.on{opacity:1;}
+  .chatbar{
+    width:100%;max-width:960px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  }
+  .chatbar input{
+    flex:1;min-width:180px;padding:10px 14px;border-radius:14px;border:2px solid transparent;font-size:15px;outline:none;
+  }
+  .chatbar input:focus{border-color:var(--yellow);}
+  .controls-hint{color:rgba(255,255,255,.85);font-size:12px;font-weight:500;}
+  .dpad{display:none;gap:6px;}
+  .dpad button{width:44px;height:44px;border-radius:12px;font-size:18px;}
+  @media (pointer:coarse){ .dpad{display:flex;} .controls-hint{display:none;} }
+
+  /* ---------- Modal ---------- */
+  .modal{
+    position:fixed;inset:0;background:rgba(10,10,40,.55);display:flex;align-items:center;justify-content:center;
+    padding:16px;z-index:50;backdrop-filter:blur(2px);
+  }
+  .modal-box{
+    background:var(--card);border-radius:24px;padding:22px;width:100%;max-width:620px;max-height:92vh;overflow:auto;
+    box-shadow:var(--shadow);position:relative;animation:pop .18s ease-out;
+  }
+  @keyframes pop{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+  .modal-box h2{margin:0 0 6px;font-size:24px;font-weight:900;}
+  .modal-box h3{margin:16px 0 8px;font-size:17px;}
+  .close-x{
+    position:absolute;top:12px;left:12px;background:#eef0f7;border:none;width:34px;height:34px;border-radius:50%;
+    font-size:18px;cursor:pointer;font-weight:700;
+  }
+  .npc-head{display:flex;align-items:center;gap:14px;}
+  .npc-face{
+    width:64px;height:64px;border-radius:50%;background:#eef0f7;display:flex;align-items:center;justify-content:center;font-size:36px;
+  }
+  .speech{
+    background:#f5f6fb;border-radius:16px;padding:14px;margin:14px 0;font-size:16px;line-height:1.5;
+  }
+  .opts{display:flex;flex-direction:column;gap:8px;}
+  .opts .btn{text-align:right;}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+  .tab{border:none;background:#eef0f7;border-radius:999px;padding:6px 14px;font-weight:700;cursor:pointer;font-size:13px;}
+  .tab.active{background:var(--purple);color:#fff;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;}
+  .item{
+    border:2px solid var(--line);border-radius:16px;padding:10px;text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center;
+  }
+  .item.owned{border-color:var(--green);}
+  .item.on{background:#eafff3;border-color:var(--green);}
+  .item .em{font-size:38px;line-height:1;}
+  .item .nm{font-weight:700;font-size:13px;}
+  .item .pr{font-size:12px;color:var(--muted);font-weight:700;}
+  .mission{
+    display:flex;align-items:center;gap:12px;border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:8px;
+  }
+  .mission.done{border-color:var(--green);background:#f3fff8;}
+  .mission.claimed{opacity:.55;}
+  .mission .mi{flex:1;}
+  .mission .mt{font-weight:700;}
+  .mission .md{font-size:13px;color:var(--muted);}
+  .map{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+  .map button{
+    border:none;border-radius:16px;padding:16px 10px;font-size:15px;font-weight:700;cursor:pointer;color:#fff;
+  }
+  .map button span{display:block;font-size:34px;margin-bottom:6px;}
+  .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0;}
+  .stat{background:#f5f6fb;border-radius:12px;padding:8px 14px;font-weight:700;font-size:14px;}
+  .toasts{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+  .toast{
+    background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;
+    box-shadow:var(--shadow);animation:toastIn .25s ease-out;max-width:calc(100vw - 32px);text-align:center;
+  }
+  .toast.gold{background:var(--yellow);color:var(--ink);}
+  @keyframes toastIn{from{transform:translateY(-14px);opacity:0}to{transform:none;opacity:1}}
+
+  /* ---------- Mini games ---------- */
+  .game-top{display:flex;justify-content:space-between;align-items:center;font-weight:900;font-size:16px;margin-bottom:8px;}
+  #catch-canvas{width:100%;border-radius:14px;background:#0b1b3a;display:block;touch-action:none;cursor:ew-resize;}
+  .mem-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+  .card{
+    aspect-ratio:1;border-radius:14px;border:none;background:var(--purple);font-size:34px;cursor:pointer;color:transparent;
+    transition:transform .15s,background .15s;
+  }
+  .card.flip{background:#fff;border:2px solid var(--purple);color:#000;}
+  .card.match{background:#eafff3;border:2px solid var(--green);color:#000;cursor:default;}
+  .quiz-q{font-size:19px;font-weight:700;margin:10px 0 14px;}
+  .quiz-opts{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .quiz-opts .btn{white-space:normal;}
+  .quiz-opts .btn.ok{background:var(--green);color:#fff;}
+  .quiz-opts .btn.bad{background:var(--red);color:#fff;}
+  .wheel-wrap{position:relative;width:280px;height:280px;margin:14px auto;}
+  .wheel{
+    width:100%;height:100%;border-radius:50%;border:8px solid #fff;box-shadow:0 0 0 4px var(--purple);
+    background:conic-gradient(#ff7a1a 0 45deg,#ffd23f 45deg 90deg,#2ec27e 90deg 135deg,#2b7cff 135deg 180deg,#7c3aed 180deg 225deg,#e5484d 225deg 270deg,#19b6c9 270deg 315deg,#ff5fa2 315deg 360deg);
+    transition:transform 3.2s cubic-bezier(.17,.67,.12,1);position:relative;
+  }
+  .wheel span{
+    position:absolute;left:50%;top:50%;transform-origin:0 0;color:#fff;font-weight:900;font-size:15px;text-shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+  .pointer{
+    position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:0;height:0;
+    border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid var(--ink);z-index:2;
+  }
+  .result{font-size:22px;font-weight:900;text-align:center;margin:14px 0;}
+  .admin-row{display:flex;gap:8px;align-items:center;margin:8px 0;flex-wrap:wrap;}
+  .admin-row input{padding:8px 10px;border:2px solid var(--line);border-radius:10px;width:110px;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;}
+</style>
+</head>
+<body>
+
+<!-- ========== LOGIN ========== -->
+<div id="login" class="screen">
+  <div class="login-card">
+    <h1 class="logo">מיקמק 2</h1>
+    <p class="sub">העולם הווירטואלי שלך - שחק, אסוף מטבעות ועצב את הדמות</p>
+    <canvas id="preview" width="180" height="180"></canvas>
+    <div class="swatches" id="swatches"></div>
+    <div class="field">
+      <label for="login-name">מה השם של המיקמק שלך?</label>
+      <input id="login-name" maxlength="14" placeholder="למשל: מיקי">
+    </div>
+    <button class="btn primary" id="login-btn" style="width:100%;font-size:18px;">כניסה לעולם</button>
+    <div class="chips" id="existing"></div>
+    <div class="note">ההתקדמות נשמרת בדפדפן הזה בלבד.</div>
+  </div>
+</div>
+
+<!-- ========== GAME ========== -->
+<div id="game" class="screen" hidden>
+  <div class="hud">
+    <div class="hud-left">
+      <span class="hud-name" id="hud-name"></span>
+      <span class="lvl" id="hud-lvl">רמה 1</span>
+      <div class="xpbar" title="ניסיון"><i id="hud-xp"></i></div>
+    </div>
+    <div class="hud-center" id="hud-loc"></div>
+    <div class="hud-right">
+      <span class="coins" id="hud-coins">🪙 0</span>
+      <button class="btn icon" id="btn-map" title="מפה">🗺️</button>
+      <button class="btn icon" id="btn-bag" title="הארון שלי">🎒</button>
+      <button class="btn icon" id="btn-missions" title="משימות">📜</button>
+      <button class="btn icon" id="btn-settings" title="הגדרות">⚙️</button>
+    </div>
+  </div>
+  <div class="stage">
+    <canvas id="world" width="960" height="540"></canvas>
+    <div id="fade"></div>
+    <div id="hint"></div>
+  </div>
+  <div class="chatbar">
+    <input id="chat" maxlength="60" placeholder="כתוב משהו שהמיקמק שלך יגיד...">
+    <button class="btn blue" id="chat-send">אמור</button>
+    <div class="dpad">
+      <button class="btn" data-dir="ArrowRight">▶</button>
+      <button class="btn" data-dir="ArrowUp">▲</button>
+      <button class="btn" data-dir="ArrowDown">▼</button>
+      <button class="btn" data-dir="ArrowLeft">◀</button>
+      <button class="btn green" data-dir="KeyE">E</button>
+    </div>
+    <span class="controls-hint">חיצים / WASD לתנועה · E או רווח לפעולה · לחיצה על המסך כדי ללכת</span>
+  </div>
+</div>
+
+<div id="modal" class="modal" hidden><div class="modal-box" id="modal-box"></div></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+'use strict';
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+const $ = s => document.querySelector(s);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const todayKey = () => new Date().toISOString().slice(0, 10);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const shuffle = arr => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ============================================================
+   DATA
+   ============================================================ */
+const COLORS = ['#ff7a59', '#ffd23f', '#2ec27e', '#2b7cff', '#a855f7', '#ff5fa2', '#19b6c9', '#8d6e63'];
+
+const ITEMS = [
+  { id: 'cap', type: 'hat', name: 'כובע מצחייה', emoji: '🧢', price: 60 },
+  { id: 'sunhat', type: 'hat', name: 'כובע קש', emoji: '👒', price: 90 },
+  { id: 'grad', type: 'hat', name: 'כובע בוגר', emoji: '🎓', price: 120 },
+  { id: 'tophat', type: 'hat', name: 'צילינדר', emoji: '🎩', price: 150 },
+  { id: 'helmet', type: 'hat', name: 'קסדת הצלה', emoji: '⛑️', price: 180 },
+  { id: 'bow', type: 'hat', name: 'פפיון ורוד', emoji: '🎀', price: 100 },
+  { id: 'crown', type: 'hat', name: 'כתר מלכותי', emoji: '👑', price: 500 },
+  { id: 'nerd', type: 'glasses', name: 'משקפיים', emoji: '👓', price: 50 },
+  { id: 'sun', type: 'glasses', name: 'משקפי שמש', emoji: '🕶️', price: 80 },
+  { id: 'goggles', type: 'glasses', name: 'משקפת', emoji: '🥽', price: 110 },
+  { id: 'dog', type: 'pet', name: 'כלבלב', emoji: '🐶', price: 150 },
+  { id: 'cat', type: 'pet', name: 'חתלתול', emoji: '🐱', price: 150 },
+  { id: 'rabbit', type: 'pet', name: 'ארנבון', emoji: '🐰', price: 200 },
+  { id: 'turtle', type: 'pet', name: 'צב', emoji: '🐢', price: 180 },
+  { id: 'parrot', type: 'pet', name: 'תוכי', emoji: '🦜', price: 250 },
+  { id: 'dragon', type: 'pet', name: 'דרקון', emoji: '🐉', price: 800 },
+  { id: 'plant', type: 'furniture', name: 'עציץ', emoji: '🪴', price: 40 },
+  { id: 'lamp', type: 'furniture', name: 'מנורה', emoji: '💡', price: 45 },
+  { id: 'chair', type: 'furniture', name: 'כיסא', emoji: '🪑', price: 50 },
+  { id: 'pic', type: 'furniture', name: 'תמונה', emoji: '🖼️', price: 60 },
+  { id: 'teddy', type: 'furniture', name: 'דובי', emoji: '🧸', price: 70 },
+  { id: 'sofa', type: 'furniture', name: 'ספה', emoji: '🛋️', price: 120 },
+  { id: 'bed', type: 'furniture', name: 'מיטה', emoji: '🛏️', price: 150 },
+  { id: 'guitar', type: 'furniture', name: 'גיטרה', emoji: '🎸', price: 160 },
+  { id: 'tv', type: 'furniture', name: 'טלוויזיה', emoji: '📺', price: 200 },
+  { id: 'console', type: 'furniture', name: 'קונסולה', emoji: '🎮', price: 220 },
+  { id: 'aquarium', type: 'furniture', name: 'אקווריום', emoji: '🐠', price: 260 },
+];
+const ITEM_TYPES = { hat: 'כובעים', glasses: 'משקפיים', pet: 'חיות מחמד', furniture: 'רהיטים' };
+const itemById = id => ITEMS.find(i => i.id === id);
+
+const QUIZ = [
+  { q: 'מהי בירת ישראל?', a: ['ירושלים', 'תל אביב', 'חיפה', 'באר שבע'] },
+  { q: 'כמה רגליים יש לעכביש?', a: ['8', '6', '10', '4'] },
+  { q: 'איזה כוכב לכת הכי קרוב לשמש?', a: ['כוכב חמה', 'נוגה', 'מאדים', 'כדור הארץ'] },
+  { q: 'מהו המקום הנמוך ביותר בעולם?', a: ['ים המלח', 'הכנרת', 'ים סוף', 'הים התיכון'] },
+  { q: 'כמה ימים יש בשנה רגילה?', a: ['365', '360', '366', '352'] },
+  { q: 'איזה צבע מתקבל מערבוב כחול וצהוב?', a: ['ירוק', 'סגול', 'כתום', 'חום'] },
+  { q: 'מהי החיה הגדולה ביותר בעולם?', a: ['לווייתן כחול', 'פיל', 'ג\'ירפה', 'כריש לבן'] },
+  { q: 'כמה צלעות יש למשושה?', a: ['6', '5', '8', '7'] },
+  { q: 'מהו הנהר הארוך ביותר בישראל?', a: ['הירדן', 'הירקון', 'הקישון', 'הבשור'] },
+  { q: 'כמה זה 7 כפול 8?', a: ['56', '54', '63', '48'] },
+  { q: 'איזה גז אנחנו נושמים כדי לחיות?', a: ['חמצן', 'פחמן דו-חמצני', 'חנקן', 'מימן'] },
+  { q: 'מהו ההר הגבוה ביותר בישראל?', a: ['החרמון', 'הכרמל', 'הר מירון', 'הר תבור'] },
+  { q: 'כמה שחקנים יש לקבוצת כדורגל על המגרש?', a: ['11', '9', '10', '12'] },
+  { q: 'מהי היבשת הגדולה ביותר?', a: ['אסיה', 'אפריקה', 'אירופה', 'אמריקה'] },
+  { q: 'כמה שעות יש ביממה?', a: ['24', '12', '36', '20'] },
+  { q: 'איזו חיה אומרת "מו"?', a: ['פרה', 'כבשה', 'סוס', 'תרנגול'] },
+  { q: 'כמה צבעים יש בקשת?', a: ['7', '5', '6', '9'] },
+  { q: 'מה הדבר הקר ביותר ברשימה?', a: ['קרח', 'מים', 'תה', 'מרק'] },
+];
+
+const MISSIONS = [
+  { id: 'visit3', name: 'מטייל מתחיל', desc: 'בקר ב-3 מקומות שונים', reward: 50, check: p => p.visited.length >= 3 },
+  { id: 'visitAll', name: 'חוקר העולם', desc: 'בקר בכל 5 המקומות', reward: 150, check: p => p.visited.length >= 5 },
+  { id: 'talk3', name: 'חברותי', desc: 'דבר עם 3 דמויות שונות', reward: 60, check: p => p.talked.length >= 3 },
+  { id: 'talkAll', name: 'מכיר את כולם', desc: 'דבר עם כל 7 הדמויות', reward: 120, check: p => p.talked.length >= 7 },
+  { id: 'catch1', name: 'תופס כוכבים', desc: 'שחק ב"תפוס את הכוכבים"', reward: 40, check: p => p.games.catch >= 1 },
+  { id: 'memory1', name: 'זיכרון של פיל', desc: 'שחק במשחק הזיכרון', reward: 40, check: p => p.games.memory >= 1 },
+  { id: 'quiz1', name: 'תלמיד מצטיין', desc: 'ענה על חידון אצל המורה', reward: 40, check: p => p.games.quiz >= 1 },
+  { id: 'games10', name: 'אלוף המשחקים', desc: 'שחק 10 משחקים בסך הכל', reward: 200, check: p => p.games.catch + p.games.memory + p.games.quiz >= 10 },
+  { id: 'buy1', name: 'קונה ראשון', desc: 'קנה פריט בחנות', reward: 50, check: p => p.owned.length >= 1 },
+  { id: 'hat', name: 'מתלבש יפה', desc: 'חבוש כובע', reward: 30, check: p => !!p.hat },
+  { id: 'pet', name: 'חבר על ארבע', desc: 'אמץ חיית מחמד', reward: 80, check: p => !!p.pet },
+  { id: 'furn3', name: 'מעצב הבית', desc: 'הנח 3 רהיטים בבית', reward: 100, check: p => p.furniture.length >= 3 },
+  { id: 'icecream', name: 'מתוק', desc: 'קנה גלידה בחוף', reward: 20, check: p => p.icecreams >= 1 },
+  { id: 'coins1000', name: 'עשיר', desc: 'צבור 1000 מטבעות', reward: 150, check: p => p.coins >= 1000 },
+  { id: 'level5', name: 'ותיק בעולם', desc: 'הגע לרמה 5', reward: 300, check: p => levelOf(p.xp) >= 5 },
+];
+
+const W = 960, H = 540, GROUND_TOP = 330, GROUND_BOTTOM = 505;
+
+const NPCS = {
+  mayor: {
+    name: 'ראש העיר מיקי', emoji: '🧔',
+    greet: ['ברוך הבא למיקמק סיטי! אני ראש העיר.', 'יום נפלא בעיר, נכון?', 'הקניון נפתח היום מחדש, שווה ביקור!'],
+    options: [
+      { text: 'מה יש לעשות בעולם?', reply: 'בחוף יש משחק כוכבים, בפארק משחק זיכרון, אצל המורה חידון, ובקניון חנות וגלגל מזל. בבית אפשר לעצב עם רהיטים.' },
+      { text: 'איך מרוויחים מטבעות?', reply: 'משחקים במשחקונים, מסיימים משימות (📜), ומסובבים את גלגל המזל פעם ביום.' },
+      { text: 'יש לך משימות בשבילי?', reply: 'בטח! פתח את לוח המשימות ותראה מה מחכה לך.', action: () => openMissions() },
+    ],
+  },
+  teacher: {
+    name: 'המורה רותי', emoji: '👩',
+    greet: ['שלום תלמיד! מוכן לחידון קצר?', 'ידע זה כוח. וגם מטבעות.'],
+    options: [
+      { text: 'בוא נעשה חידון!', reply: null, action: () => startQuiz() },
+      { text: 'מה מקבלים בחידון?', reply: 'על כל תשובה נכונה 15 מטבעות, ועל 5 מתוך 5 יש בונוס של 25.' },
+    ],
+  },
+  lifeguard: {
+    name: 'המציל דני', emoji: '🏄',
+    greet: ['איזה גלים היום! רוצה לתפוס כוכבים?', 'הים רגוע, בוא נשחק.'],
+    options: [
+      { text: 'תפוס את הכוכבים!', reply: null, action: () => startCatchGame() },
+      { text: 'איך משחקים?', reply: 'הזז את הסל עם העכבר, האצבע או החיצים. תפוס כוכבים, תתחמק מפצצות. יש 30 שניות.' },
+    ],
+  },
+  icecream: {
+    name: 'גלידריית שוקו', emoji: '🍦',
+    greet: ['גלידה טרייה! רק 10 מטבעות.', 'יש טעמים חדשים היום!'],
+    options: [
+      {
+        text: 'אני רוצה גלידה (10 🪙)', reply: null, action: () => {
+          if (!spend(10)) return toast('אין מספיק מטבעות');
+          P.icecreams = (P.icecreams || 0) + 1; gainXp(5); save();
+          sayBubble(player, pick(['טעים!', 'יאמי 🍦', 'הכי טעים בעולם!']));
+          closeModal();
+        }
+      },
+      { text: 'איזה טעמים יש?', reply: 'שוקולד, וניל, פיסטוק, ותות עם סוכריות. כולם במחיר אחד.' },
+    ],
+  },
+  gardener: {
+    name: 'הגננת נועה', emoji: '👧',
+    greet: ['הפרחים פורחים היום! רוצה לשחק משחק זיכרון?', 'אני זוכרת כל פרח בגינה.'],
+    options: [
+      { text: 'משחק הזיכרון!', reply: null, action: () => startMemory() },
+      { text: 'איך משחקים?', reply: 'הופכים שני קלפים בכל תור. מוצאים את כל הזוגות כמה שיותר מהר. ככל שסיימת מהר יותר, הפרס גדול יותר.' },
+    ],
+  },
+  wise: {
+    name: 'הזקן החכם', emoji: '🧙',
+    greet: ['אהה... מיקמק צעיר. שב ושמע.', 'הסבלנות היא הכוח הגדול ביותר.'],
+    options: [
+      { text: 'יש לך טיפ?', reply: null, action: () => { showNpcReply('wise', pick(['כוכב זהב שווה 25 נקודות במשחק הכוכבים.', 'גלגל המזל מתאפס כל יום. אל תשכח.', 'הכתר הוא הפריט היקר ביותר. רק מלך אמיתי קונה אותו.', 'הדרקון עולה 800 מטבעות. רק מי שמתמיד מגיע אליו.'])); } },
+      { text: 'מי אתה?', reply: 'הייתי כאן לפני שהעיר נבנתה. ואהיה כאן אחריה.' },
+    ],
+  },
+  shop: {
+    name: 'המוכרת שירה', emoji: '🛍️',
+    greet: ['ברוכים הבאים לחנות! יש לנו כובעים, משקפיים, חיות ורהיטים.', 'מבצעים לא יהיו. אבל יש פריטים מעולים.'],
+    options: [
+      { text: 'אני רוצה לקנות', reply: null, action: () => openShop() },
+      { text: 'מה חדש?', reply: 'הגיע אקווריום לבית, ודרקון למי שחוסך מספיק.' },
+    ],
+  },
+};
+
+const LOCATIONS = {
+  city: {
+    name: 'מרכז העיר', icon: '🏙️', color: '#2b7cff',
+    exits: { left: 'park', right: 'beach' },
+    things: [
+      { kind: 'npc', id: 'mayor', x: 300, y: 420 },
+      { kind: 'npc', id: 'teacher', x: 690, y: 400 },
+      { kind: 'obj', id: 'mall', emoji: '🏬', label: 'כניסה לקניון', x: 520, y: 355, action: () => travel('mall') },
+    ],
+  },
+  beach: {
+    name: 'החוף', icon: '🏖️', color: '#ffb020',
+    exits: { left: 'city' },
+    things: [
+      { kind: 'npc', id: 'lifeguard', x: 420, y: 430 },
+      { kind: 'npc', id: 'icecream', x: 740, y: 390 },
+    ],
+  },
+  park: {
+    name: 'הפארק', icon: '🌳', color: '#2ec27e',
+    exits: { right: 'city', left: 'home' },
+    things: [
+      { kind: 'npc', id: 'gardener', x: 330, y: 430 },
+      { kind: 'npc', id: 'wise', x: 650, y: 390 },
+    ],
+  },
+  mall: {
+    name: 'הקניון', icon: '🛍️', color: '#a855f7',
+    exits: { right: 'city' },
+    things: [
+      { kind: 'npc', id: 'shop', x: 300, y: 420 },
+      { kind: 'obj', id: 'wheel', emoji: '🎡', label: 'גלגל המזל', x: 680, y: 380, action: () => openWheel() },
+    ],
+  },
+  home: {
+    name: 'הבית שלי', icon: '🏠', color: '#ff7a59',
+    exits: { right: 'park' },
+    things: [
+      { kind: 'obj', id: 'decor', emoji: '📦', label: 'קופסת הרהיטים', x: 130, y: 440, action: () => openDecor() },
+    ],
+  },
+};
+
+/* ============================================================
+   STORAGE / PROFILE
+   ============================================================ */
+const STORE_KEY = 'mikmak2_users';
+const LAST_KEY = 'mikmak2_last';
+function loadUsers() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch { return {}; } }
+function saveUsers(u) { try { localStorage.setItem(STORE_KEY, JSON.stringify(u)); } catch {} }
+let users = loadUsers();
+let P = null;
+
+function newProfile(name, color) {
+  return {
+    name, color, hat: null, glasses: null, pet: null,
+    coins: 100, xp: 0, owned: [], furniture: [],
+    visited: ['city'], talked: [], games: { catch: 0, memory: 0, quiz: 0 },
+    claimed: [], icecreams: 0, lastDaily: null, lastSpin: null,
+    cheat: false, created: Date.now(), lastSeen: Date.now(),
+  };
+}
+function normalize(p) {
+  const d = newProfile(p.name, p.color || COLORS[0]);
+  const out = Object.assign(d, p);
+  out.games = Object.assign({ catch: 0, memory: 0, quiz: 0 }, p.games || {});
+  return out;
+}
+function save() {
+  if (!P) return;
+  P.lastSeen = Date.now();
+  users[P.name] = P;
+  saveUsers(users);
+  updateHUD();
+}
+const levelOf = xp => Math.floor(Math.sqrt(xp / 40)) + 1;
+const xpForLevel = lvl => (lvl - 1) * (lvl - 1) * 40;
+
+function gainCoins(n, silent) {
+  P.coins += n; save();
+  if (!silent) toast(`+${n} 🪙`, 'gold');
+}
+function spend(n) {
+  if (P.cheat) return true;
+  if (P.coins < n) return false;
+  P.coins -= n; save(); return true;
+}
+function gainXp(n) {
+  const before = levelOf(P.xp);
+  P.xp += n;
+  const after = levelOf(P.xp);
+  save();
+  if (after > before) { toast(`עלית לרמה ${after}! 🎉`); gainCoins(after * 20, true); toast(`בונוס רמה: +${after * 20} 🪙`, 'gold'); }
+}
+
+/* ============================================================
+   UI HELPERS
+   ============================================================ */
+function toast(msg, cls) {
+  const el = document.createElement('div');
+  el.className = 'toast' + (cls ? ' ' + cls : '');
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 2200);
+  setTimeout(() => el.remove(), 2600);
+}
+
+let modalOpen = false;
+let activeGame = null;
+function openModal(html, opts = {}) {
+  if (activeGame) { activeGame.stop(); activeGame = null; }
+  const box = $('#modal-box');
+  box.innerHTML = (opts.noClose ? '' : '<button class="close-x" id="modal-close">✕</button>') + html;
+  $('#modal').hidden = false;
+  modalOpen = true;
+  keys.clear();
+  const c = $('#modal-close');
+  if (c) c.onclick = closeModal;
+  return box;
+}
+function closeModal() {
+  if (activeGame) { activeGame.stop(); activeGame = null; }
+  $('#modal').hidden = true;
+  modalOpen = false;
+}
+$('#modal').addEventListener('click', e => { if (e.target === $('#modal') && !activeGame) closeModal(); });
+
+function updateHUD() {
+  if (!P) return;
+  $('#hud-name').textContent = P.name;
+  const lvl = levelOf(P.xp);
+  $('#hud-lvl').textContent = 'רמה ' + lvl + (P.cheat ? ' ⚡' : '');
+  const lo = xpForLevel(lvl), hi = xpForLevel(lvl + 1);
+  $('#hud-xp').style.width = clamp((P.xp - lo) / (hi - lo) * 100, 0, 100) + '%';
+  $('#hud-coins').textContent = '🪙 ' + (P.cheat ? '∞' : P.coins);
+  $('#hud-loc').textContent = LOCATIONS[loc].icon + ' ' + LOCATIONS[loc].name;
+  const pending = MISSIONS.filter(m => !P.claimed.includes(m.id) && m.check(P)).length;
+  $('#btn-missions').textContent = pending ? `📜 ${pending}` : '📜';
+}
+
+/* ============================================================
+   AVATAR DRAWING
+   ============================================================ */
+function drawAvatar(ctx, x, y, p, scale, facing, walkT, t, opts = {}) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(scale, scale);
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.beginPath(); ctx.ellipse(0, 2, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+  const bob = walkT ? Math.sin(walkT * 14) * 3 : Math.sin(t * 2.2) * 1.2;
+  ctx.translate(0, bob);
+  // feet
+  ctx.fillStyle = shade(p.color, -35);
+  const step = walkT ? Math.sin(walkT * 14) * 7 : 0;
+  ctx.beginPath(); ctx.ellipse(-11, 0 + step * .3, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(11, 0 - step * .3, 9, 5, 0, 0, Math.PI * 2); ctx.fill();
+  // antennae
+  ctx.strokeStyle = shade(p.color, -25); ctx.lineWidth = 3; ctx.lineCap = 'round';
+  const sway = Math.sin(t * 3) * 3;
+  ctx.beginPath(); ctx.moveTo(-10, -56); ctx.quadraticCurveTo(-16 + sway, -74, -14 + sway, -82); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10, -56); ctx.quadraticCurveTo(16 - sway, -74, 14 - sway, -82); ctx.stroke();
+  ctx.fillStyle = '#ffd23f';
+  ctx.beginPath(); ctx.arc(-14 + sway, -84, 4.5, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(14 - sway, -84, 4.5, 0, Math.PI * 2); ctx.fill();
+  // body
+  const g = ctx.createRadialGradient(-8, -42, 4, 0, -32, 36);
+  g.addColorStop(0, shade(p.color, 30)); g.addColorStop(1, p.color);
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.ellipse(0, -32, 27, 31, 0, 0, Math.PI * 2); ctx.fill();
+  // belly
+  ctx.fillStyle = 'rgba(255,255,255,.35)';
+  ctx.beginPath(); ctx.ellipse(0, -22, 15, 14, 0, 0, Math.PI * 2); ctx.fill();
+  // eyes
+  const ex = facing * 3;
+  for (const s of [-1, 1]) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.ellipse(s * 10 + ex, -42, 8, 9, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#22223b';
+    ctx.beginPath(); ctx.arc(s * 10 + ex + facing * 2.5, -41, 4, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(s * 10 + ex + facing * 2.5 + 1.5, -43, 1.4, 0, Math.PI * 2); ctx.fill();
+  }
+  // mouth
+  ctx.strokeStyle = shade(p.color, -60); ctx.lineWidth = 2.2;
+  ctx.beginPath(); ctx.arc(ex, -28, 7, 0.15 * Math.PI, 0.85 * Math.PI); ctx.stroke();
+  // cheeks
+  ctx.fillStyle = 'rgba(255,100,120,.35)';
+  ctx.beginPath(); ctx.arc(-18 + ex, -30, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(18 + ex, -30, 4, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (p.glasses) { ctx.font = '26px sans-serif'; ctx.fillText(itemById(p.glasses).emoji, ex, -42); }
+  if (p.hat) { ctx.font = '34px sans-serif'; ctx.fillText(itemById(p.hat).emoji, 0, -72); }
+  if (!opts.noName) {
+    ctx.font = '700 13px Rubik, sans-serif';
+    const label = p.name;
+    const w = ctx.measureText(label).width + 14;
+    ctx.fillStyle = 'rgba(0,0,0,.55)';
+    roundRect(ctx, -w / 2, -108, w, 20, 10); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.fillText(label, 0, -98);
+  }
+  ctx.restore();
+}
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) + amt, g = ((n >> 8) & 255) + amt, b = (n & 255) + amt;
+  r = clamp(r, 0, 255); g = clamp(g, 0, 255); b = clamp(b, 0, 255);
+  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
+}
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+let loginColor = COLORS[0];
+const pv = $('#preview').getContext('2d');
+function renderPreview() {
+  pv.clearRect(0, 0, 180, 180);
+  drawAvatar(pv, 90, 150, { name: $('#login-name').value.trim() || 'מיקמק', color: loginColor, hat: null, glasses: null }, 1.25, 1, 0, performance.now() / 1000);
+}
+function buildSwatches() {
+  const row = $('#swatches'); row.innerHTML = '';
+  COLORS.forEach(c => {
+    const d = document.createElement('div');
+    d.className = 'swatch' + (c === loginColor ? ' active' : ''); d.style.background = c;
+    d.onclick = () => { loginColor = c; buildSwatches(); };
+    row.appendChild(d);
+  });
+}
+function buildExisting() {
+  const box = $('#existing'); box.innerHTML = '';
+  const names = Object.keys(users).sort((a, b) => (users[b].lastSeen || 0) - (users[a].lastSeen || 0));
+  if (!names.length) return;
+  const t = document.createElement('div'); t.style.cssText = 'width:100%;font-size:13px;color:var(--muted);font-weight:700;'; t.textContent = 'מיקמקים שמורים:';
+  box.appendChild(t);
+  names.forEach(n => {
+    const b = document.createElement('button'); b.className = 'chip'; b.textContent = n;
+    b.onclick = () => { $('#login-name').value = n; loginColor = users[n].color; buildSwatches(); enterWorld(); };
+    box.appendChild(b);
+  });
+}
+$('#login-name').addEventListener('input', renderPreview);
+$('#login-name').addEventListener('keydown', e => { if (e.code === 'Enter' || e.code === 'NumpadEnter') enterWorld(); });
+$('#login-btn').onclick = enterWorld;
+(function loginLoop() { if ($('#login').hidden) return; renderPreview(); requestAnimationFrame(loginLoop); })();
+
+function enterWorld() {
+  const name = $('#login-name').value.trim();
+  if (!name) { toast('בחר שם למיקמק שלך'); $('#login-name').focus(); return; }
+  if (users[name]) { P = normalize(users[name]); if (!users[name].color) P.color = loginColor; }
+  else { P = newProfile(name, loginColor); toast(`ברוך הבא ${name}! קיבלת 100 🪙 להתחלה`, 'gold'); }
+  try { localStorage.setItem(LAST_KEY, name); } catch {}
+  $('#login').hidden = true;
+  $('#game').hidden = false;
+  loc = 'city';
+  player.x = 480; player.y = 460;
+  save();
+  const today = todayKey();
+  if (P.lastDaily !== today) { P.lastDaily = today; gainCoins(50, true); setTimeout(() => toast('בונוס יומי: +50 🪙', 'gold'), 600); }
+  save();
+  running = true;
+  lastTs = performance.now();
+  requestAnimationFrame(frame);
+}
+
+/* ============================================================
+   WORLD STATE
+   ============================================================ */
+const canvas = $('#world');
+const ctx = canvas.getContext('2d');
+let loc = 'city';
+let running = false, lastTs = 0, T = 0;
+const keys = new Set();
+const player = { x: 480, y: 460, facing: 1, walkT: 0, target: null, pendingInteract: null, bubble: null };
+const pet = { x: 420, y: 470 };
+const npcBubbles = {};
+let placing = null; // furniture id in placing mode
+let transitioning = false;
+
+function sayBubble(ent, text) { ent.bubble = { text, until: T + 4 }; }
+
+/* ---------- Input ---------- */
+window.addEventListener('keydown', e => {
+  if (modalOpen) { if (e.code === 'Escape' && !activeGame) closeModal(); return; }
+  if (document.activeElement === $('#chat')) return;
+  const codes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyE'];
+  if (codes.includes(e.code)) {
+    e.preventDefault();
+    keys.add(e.code);
+    if (e.code === 'Space' || e.code === 'KeyE') tryInteract();
+    else { player.target = null; player.pendingInteract = null; }
+  }
+  if (e.code === 'Enter' && !modalOpen) $('#chat').focus();
+});
+window.addEventListener('keyup', e => keys.delete(e.code));
+document.querySelectorAll('.dpad button').forEach(b => {
+  const code = b.dataset.dir;
+  const down = e => { e.preventDefault(); if (code === 'KeyE') tryInteract(); else { keys.add(code); player.target = null; } };
+  const up = e => { e.preventDefault(); keys.delete(code); };
+  b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
+});
+
+function canvasPoint(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+}
+canvas.addEventListener('pointerdown', e => {
+  if (modalOpen || transitioning) return;
+  const pt = canvasPoint(e);
+  if (placing) {
+    const id = placing; placing = null;
+    P.furniture.push({ id, x: clamp(pt.x, 60, W - 60), y: clamp(pt.y, GROUND_TOP - 40, GROUND_BOTTOM) });
+    save(); toast('הרהיט הונח! לחץ עליו כדי לאסוף');
+    return;
+  }
+  if (loc === 'home') {
+    const hit = P.furniture.find(f => Math.abs(f.x - pt.x) < 30 && Math.abs(f.y - 20 - pt.y) < 30);
+    if (hit) { P.furniture = P.furniture.filter(f => f !== hit); save(); toast('הרהיט חזר לקופסה'); return; }
+  }
+  const thing = hitThing(pt);
+  if (thing) {
+    player.pendingInteract = thing;
+    player.target = { x: clamp(thing.x + (player.x < thing.x ? -60 : 60), 30, W - 30), y: clamp(thing.y + 10, GROUND_TOP, GROUND_BOTTOM) };
+  } else {
+    player.pendingInteract = null;
+    player.target = { x: clamp(pt.x, 20, W - 20), y: clamp(pt.y, GROUND_TOP, GROUND_BOTTOM) };
+  }
+});
+function hitThing(pt) {
+  return currentThings().find(t => Math.abs(t.x - pt.x) < 42 && pt.y > t.y - 95 && pt.y < t.y + 15);
+}
+function currentThings() { return LOCATIONS[loc].things; }
+function nearestThing() {
+  let best = null, bd = 80;
+  for (const t of currentThings()) {
+    const d = Math.hypot(t.x - player.x, (t.y - player.y) * 1.6);
+    if (d < bd) { bd = d; best = t; }
+  }
+  return best;
+}
+function tryInteract() {
+  const t = nearestThing();
+  if (t) interact(t);
+}
+function interact(t) {
+  if (t.kind === 'npc') openNpc(t.id);
+  else t.action();
+}
+
+$('#chat-send').onclick = sendChat;
+$('#chat').addEventListener('keydown', e => { if (e.code === 'Enter' || e.code === 'NumpadEnter') { sendChat(); } if (e.code === 'Escape') $('#chat').blur(); });
+function sendChat() {
+  const v = $('#chat').value.trim();
+  if (!v) return;
+  sayBubble(player, v);
+  $('#chat').value = '';
+  $('#chat').blur();
+  // NPC near might answer
+  const t = nearestThing();
+  if (t && t.kind === 'npc' && Math.random() < .8) {
+    setTimeout(() => { npcBubbles[t.id] = { text: pick(['נכון מאוד!', 'חחח', 'מעניין...', 'גם אני חושב ככה', 'יופי!', 'ספר לי עוד']), until: T + 3.5 }; }, 700);
+  }
+}
+
+/* ---------- Travel ---------- */
+function travel(to, fromDir) {
+  if (transitioning || !LOCATIONS[to]) return;
+  transitioning = true;
+  player.target = null; player.pendingInteract = null; placing = null;
+  const fade = $('#fade');
+  fade.style.opacity = '1';
+  setTimeout(() => {
+    const prev = loc;
+    loc = to;
+    const L = LOCATIONS[to];
+    if (L.exits.left === prev) player.x = 70;
+    else if (L.exits.right === prev) player.x = W - 70;
+    else player.x = 480;
+    player.y = 450;
+    pet.x = player.x - 50 * player.facing; pet.y = player.y;
+    if (!P.visited.includes(to)) { P.visited.push(to); toast(`גילית מקום חדש: ${L.name}!`); gainXp(15); }
+    save();
+    fade.style.opacity = '0';
+    setTimeout(() => { transitioning = false; }, 350);
+  }, 360);
+}
+
+/* ============================================================
+   GAME LOOP
+   ============================================================ */
+function frame(ts) {
+  if (!running) return;
+  const dt = Math.min(0.05, (ts - lastTs) / 1000);
+  lastTs = ts; T += dt;
+  update(dt);
+  render();
+  requestAnimationFrame(frame);
+}
+
+function update(dt) {
+  if (modalOpen || transitioning) { player.walkT = 0; return; }
+  const speed = (P.cheat ? 380 : 230) * dt;
+  let dx = 0, dy = 0;
+  if (keys.has('ArrowLeft') || keys.has('KeyA')) dx -= 1;
+  if (keys.has('ArrowRight') || keys.has('KeyD')) dx += 1;
+  if (keys.has('ArrowUp') || keys.has('KeyW')) dy -= 1;
+  if (keys.has('ArrowDown') || keys.has('KeyS')) dy += 1;
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy); dx /= len; dy /= len;
+    player.x += dx * speed; player.y += dy * speed * .75;
+  } else if (player.target) {
+    const tx = player.target.x - player.x, ty = player.target.y - player.y;
+    const d = Math.hypot(tx, ty);
+    if (d < 4) {
+      player.target = null;
+      if (player.pendingInteract) { const t = player.pendingInteract; player.pendingInteract = null; interact(t); }
+    } else {
+      const s = Math.min(d, speed);
+      dx = tx / d; dy = ty / d;
+      player.x += dx * s; player.y += dy * s;
+    }
+  }
+  if (dx) player.facing = dx > 0 ? 1 : -1;
+  player.walkT = (dx || dy) ? player.walkT + dt : 0;
+  player.y = clamp(player.y, GROUND_TOP, GROUND_BOTTOM);
+  // exits
+  const ex = LOCATIONS[loc].exits;
+  if (player.x < 12 && ex.left) { travel(ex.left); return; }
+  if (player.x > W - 12 && ex.right) { travel(ex.right); return; }
+  player.x = clamp(player.x, 10, W - 10);
+  // pet follow
+  const px = player.x - 48 * player.facing, py = player.y + 4;
+  pet.x += (px - pet.x) * 0.06; pet.y += (py - pet.y) * 0.06;
+  // hint
+  const near = nearestThing();
+  const hint = $('#hint');
+  if (placing) { hint.textContent = 'לחץ על המסך כדי להניח את הרהיט'; hint.classList.add('on'); }
+  else if (near) { hint.textContent = (near.kind === 'npc' ? 'דבר עם ' + NPCS[near.id].name : near.label) + ' (E)'; hint.classList.add('on'); }
+  else hint.classList.remove('on');
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  ctx.clearRect(0, 0, W, H);
+  BACKGROUNDS[loc](ctx, T);
+  drawExits();
+  const drawList = [];
+  for (const t of currentThings()) drawList.push({ y: t.y, fn: () => drawThing(t) });
+  if (loc === 'home') for (const f of P.furniture) drawList.push({ y: f.y, fn: () => drawEmoji(itemById(f.id).emoji, f.x, f.y - 20, 54) });
+  if (P.pet) drawList.push({ y: pet.y - 1, fn: () => drawPet() });
+  drawList.push({ y: player.y, fn: () => { const sc = 0.78 + (player.y - GROUND_TOP) / (GROUND_BOTTOM - GROUND_TOP) * 0.32; drawAvatar(ctx, player.x, player.y, P, sc, player.facing, player.walkT, T); } });
+  drawList.sort((a, b) => a.y - b.y).forEach(d => d.fn());
+  // bubbles on top
+  if (player.bubble && player.bubble.until > T) drawBubble(player.bubble.text, player.x, player.y - 118);
+  for (const t of currentThings()) if (t.kind === 'npc' && npcBubbles[t.id] && npcBubbles[t.id].until > T) drawBubble(npcBubbles[t.id].text, t.x, t.y - 100);
+  if (placing) { ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(0, 0, W, 40); ctx.fillStyle = '#fff'; ctx.font = '700 18px Rubik'; ctx.textAlign = 'center'; ctx.fillText('מצב עיצוב: לחץ במקום שבו תרצה להניח את ' + itemById(placing).name, W / 2, 26); }
+}
+function drawEmoji(em, x, y, size) {
+  ctx.font = size + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(em, x, y);
+}
+function drawThing(t) {
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.beginPath(); ctx.ellipse(t.x, t.y + 2, 26, 8, 0, 0, Math.PI * 2); ctx.fill();
+  const near = nearestThing() === t;
+  const bob = Math.sin(T * 2 + t.x) * 2;
+  if (t.kind === 'npc') {
+    drawEmoji(NPCS[t.id].emoji, t.x, t.y - 32 + bob, 58);
+    labelAt(NPCS[t.id].name, t.x, t.y - 78, near);
+  } else {
+    drawEmoji(t.emoji, t.x, t.y - 32 + bob, 58);
+    labelAt(t.label, t.x, t.y - 78, near);
+  }
+}
+function labelAt(text, x, y, hi) {
+  ctx.font = '700 13px Rubik'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + 16;
+  ctx.fillStyle = hi ? '#ffd23f' : 'rgba(255,255,255,.85)';
+  roundRect(ctx, x - w / 2, y - 11, w, 22, 11); ctx.fill();
+  ctx.fillStyle = '#22223b'; ctx.fillText(text, x, y);
+}
+function drawPet() {
+  ctx.fillStyle = 'rgba(0,0,0,.2)';
+  ctx.beginPath(); ctx.ellipse(pet.x, pet.y + 2, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
+  const hop = Math.abs(Math.sin(T * 6)) * (player.walkT ? 6 : 1);
+  ctx.save(); ctx.translate(pet.x, pet.y - 16 - hop); ctx.scale(player.facing < 0 ? -1 : 1, 1);
+  drawEmoji(itemById(P.pet).emoji, 0, 0, 34);
+  ctx.restore();
+}
+function drawBubble(text, x, y) {
+  ctx.font = '500 15px Rubik'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const w = Math.min(ctx.measureText(text).width + 24, 420);
+  const bx = clamp(x, w / 2 + 6, W - w / 2 - 6);
+  ctx.fillStyle = '#fff';
+  roundRect(ctx, bx - w / 2, y - 16, w, 32, 14); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(x - 6, y + 14); ctx.lineTo(x, y + 24); ctx.lineTo(x + 6, y + 14); ctx.fill();
+  ctx.fillStyle = '#22223b'; ctx.fillText(text, bx, y);
+}
+function drawExits() {
+  const ex = LOCATIONS[loc].exits;
+  ctx.font = '700 13px Rubik'; ctx.textBaseline = 'middle';
+  if (ex.left) {
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; roundRect(ctx, 8, 300, 140, 26, 13); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText('◀ ' + LOCATIONS[ex.left].name, 78, 313);
+  }
+  if (ex.right) {
+    ctx.fillStyle = 'rgba(0,0,0,.45)'; roundRect(ctx, W - 148, 300, 140, 26, 13); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.fillText(LOCATIONS[ex.right].name + ' ▶', W - 78, 313);
+  }
+}
+
+/* ---------- Backgrounds ---------- */
+function sky(c, top, bottom) {
+  const g = c.createLinearGradient(0, 0, 0, GROUND_TOP); g.addColorStop(0, top); g.addColorStop(1, bottom);
+  c.fillStyle = g; c.fillRect(0, 0, W, GROUND_TOP);
+}
+function clouds(c, t, alpha = .9) {
+  c.fillStyle = `rgba(255,255,255,${alpha})`;
+  for (let i = 0; i < 4; i++) {
+    const x = ((t * 12 + i * 260) % (W + 200)) - 100, y = 50 + i * 28;
+    c.beginPath(); c.ellipse(x, y, 46, 18, 0, 0, Math.PI * 2); c.ellipse(x + 30, y - 10, 34, 20, 0, 0, Math.PI * 2); c.ellipse(x - 30, y - 6, 30, 16, 0, 0, Math.PI * 2); c.fill();
+  }
+}
+function sun(c, x, y) {
+  c.fillStyle = '#ffe66d'; c.beginPath(); c.arc(x, y, 34, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(255,230,109,.35)'; c.beginPath(); c.arc(x, y, 50, 0, Math.PI * 2); c.fill();
+}
+const BUILDINGS = [
+  { x: 0, w: 120, h: 190, col: '#5b6cff' }, { x: 130, w: 90, h: 240, col: '#ff8fab' }, { x: 230, w: 140, h: 160, col: '#ffb347' },
+  { x: 390, w: 180, h: 210, col: '#7c3aed' }, { x: 600, w: 110, h: 150, col: '#2ec27e' }, { x: 720, w: 100, h: 260, col: '#19b6c9' }, { x: 830, w: 130, h: 180, col: '#ff7a59' },
+];
+const BACKGROUNDS = {
+  city(c, t) {
+    sky(c, '#5db2ff', '#d6f0ff'); sun(c, 120, 80); clouds(c, t);
+    for (const b of BUILDINGS) {
+      c.fillStyle = b.col; c.fillRect(b.x, GROUND_TOP - b.h, b.w, b.h);
+      c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(b.x + b.w - 14, GROUND_TOP - b.h, 14, b.h);
+      for (let y = GROUND_TOP - b.h + 18; y < GROUND_TOP - 20; y += 30)
+        for (let x = b.x + 14; x < b.x + b.w - 18; x += 28) {
+          c.fillStyle = ((x * 7 + y * 3) % 5 === 0) ? '#ffe66d' : 'rgba(255,255,255,.75)'; c.fillRect(x, y, 14, 18);
+        }
+    }
+    // mall front
+    c.fillStyle = '#ffffff'; c.fillRect(440, GROUND_TOP - 90, 160, 90);
+    c.fillStyle = '#a855f7'; c.fillRect(440, GROUND_TOP - 110, 160, 26);
+    c.fillStyle = '#fff'; c.font = '900 16px Rubik'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('קניון מיקמק', 520, GROUND_TOP - 97);
+    c.fillStyle = '#7c3aed'; c.fillRect(495, GROUND_TOP - 64, 50, 64);
+    // pavement + road
+    c.fillStyle = '#c9ced8'; c.fillRect(0, GROUND_TOP, W, 60);
+    c.fillStyle = '#4b5261'; c.fillRect(0, GROUND_TOP + 60, W, H - GROUND_TOP - 60);
+    c.fillStyle = '#ffd23f'; for (let x = 0; x < W; x += 60) c.fillRect(x, 440, 30, 5);
+    c.fillStyle = '#dde1ea'; for (let x = 0; x < W; x += 40) c.fillRect(x, GROUND_TOP + 58, 20, 3);
+    // fountain
+    c.fillStyle = '#9fb3c8'; c.beginPath(); c.ellipse(820, 385, 60, 20, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#5fb8ff'; c.beginPath(); c.ellipse(820, 383, 50, 14, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(180,225,255,.9)';
+    for (let i = 0; i < 6; i++) { const ph = (t * 1.5 + i / 6) % 1; c.beginPath(); c.arc(820 + Math.sin(i) * 20 * ph, 375 - ph * 50 + ph * ph * 40, 3, 0, Math.PI * 2); c.fill(); }
+    c.fillStyle = '#9fb3c8'; c.fillRect(812, 340, 16, 40);
+  },
+  beach(c, t) {
+    sky(c, '#4aa9ff', '#c9ecff'); sun(c, 800, 90); clouds(c, t, .8);
+    const g = c.createLinearGradient(0, 200, 0, 360); g.addColorStop(0, '#1e88e5'); g.addColorStop(1, '#4fc3f7');
+    c.fillStyle = g; c.fillRect(0, 200, W, 160);
+    c.fillStyle = 'rgba(255,255,255,.6)';
+    for (let i = 0; i < 3; i++) {
+      c.beginPath(); c.moveTo(0, 250 + i * 35);
+      for (let x = 0; x <= W; x += 20) c.lineTo(x, 250 + i * 35 + Math.sin(x / 40 + t * 2 + i) * 5);
+      c.lineTo(W, 254 + i * 35); c.lineTo(0, 254 + i * 35); c.fill();
+    }
+    c.fillStyle = '#f6dfa6'; c.beginPath(); c.moveTo(0, 360); c.quadraticCurveTo(300, 330, 600, 345); c.quadraticCurveTo(800, 355, W, 335); c.lineTo(W, H); c.lineTo(0, H); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.moveTo(0, 362); c.quadraticCurveTo(300, 332 + Math.sin(t * 2) * 4, 600, 347); c.quadraticCurveTo(800, 357, W, 337); c.lineTo(W, 345); c.quadraticCurveTo(800, 365, 600, 355); c.quadraticCurveTo(300, 342, 0, 372); c.fill();
+    drawEmoji('🌴', 120, 290, 120); drawEmoji('🌴', 880, 300, 100); drawEmoji('⛱️', 600, 400, 70); drawEmoji('🐚', 250, 470, 22); drawEmoji('⛵', 300 + Math.sin(t * .5) * 40, 235, 40);
+  },
+  park(c, t) {
+    sky(c, '#64b5f6', '#e3f6ff'); sun(c, 160, 90); clouds(c, t);
+    c.fillStyle = '#7ccf72'; c.beginPath(); c.ellipse(200, 330, 320, 110, 0, Math.PI, 0); c.fill();
+    c.fillStyle = '#5fbf5a'; c.beginPath(); c.ellipse(720, 330, 360, 130, 0, Math.PI, 0); c.fill();
+    c.fillStyle = '#4caf50'; c.fillRect(0, GROUND_TOP, W, H - GROUND_TOP);
+    c.fillStyle = '#43a047'; for (let i = 0; i < 40; i++) { const x = (i * 97) % W, y = GROUND_TOP + 10 + (i * 53) % 190; c.fillRect(x, y, 3, 8); }
+    c.fillStyle = '#9fd7ff'; c.beginPath(); c.ellipse(820, 470, 110, 34, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(255,255,255,.5)'; c.beginPath(); c.ellipse(800 + Math.sin(t) * 6, 465, 40, 8, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#c9a26b'; c.fillRect(0, 395, W, 22);
+    drawEmoji('🌳', 80, 270, 130); drawEmoji('🌳', 520, 275, 110); drawEmoji('🌲', 900, 265, 120); drawEmoji('🌸', 200, 480, 22); drawEmoji('🌼', 420, 500, 22); drawEmoji('🌷', 600, 475, 22); drawEmoji('🦆', 850 + Math.sin(t * .8) * 30, 462, 30);
+  },
+  mall(c, t) {
+    c.fillStyle = '#f4ecfb'; c.fillRect(0, 0, W, GROUND_TOP);
+    c.fillStyle = '#e4d6f5'; c.fillRect(0, 0, W, 60);
+    for (let x = 80; x < W; x += 160) { c.fillStyle = '#fff6c2'; c.beginPath(); c.ellipse(x, 60, 40, 10, 0, 0, Math.PI * 2); c.fill(); }
+    const shops = [{ x: 40, n: 'אופנה', col: '#ff5fa2' }, { x: 300, n: 'צעצועים', col: '#2b7cff' }, { x: 560, n: 'גלידה', col: '#2ec27e' }, { x: 790, n: 'ספרים', col: '#ff7a1a' }];
+    for (const s of shops) {
+      c.fillStyle = '#fff'; c.fillRect(s.x, 120, 150, GROUND_TOP - 120);
+      c.fillStyle = s.col; c.fillRect(s.x, 100, 150, 36);
+      c.fillStyle = '#fff'; c.font = '900 18px Rubik'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(s.n, s.x + 75, 118);
+      c.fillStyle = '#d8ecff'; c.fillRect(s.x + 14, 150, 122, 120);
+      c.strokeStyle = '#cfd8e6'; c.lineWidth = 3; c.strokeRect(s.x + 14, 150, 122, 120);
+    }
+    for (let y = GROUND_TOP; y < H; y += 40) for (let x = 0; x < W; x += 40) { c.fillStyle = ((x + y) / 40) % 2 ? '#e9e4f0' : '#f8f5fb'; c.fillRect(x, y, 40, 40); }
+    drawEmoji('🪴', 520, 300, 54); drawEmoji('🪴', 980 - 60, 300, 54);
+  },
+  home(c, t) {
+    c.fillStyle = '#ffe9c7'; c.fillRect(0, 0, W, GROUND_TOP);
+    c.fillStyle = 'rgba(255,255,255,.35)'; for (let x = 0; x < W; x += 60) c.fillRect(x, 0, 24, GROUND_TOP);
+    c.fillStyle = '#8d6e63'; c.fillRect(0, GROUND_TOP - 10, W, 10);
+    // window
+    c.fillStyle = '#6d4c41'; c.fillRect(380, 70, 200, 150);
+    const g = c.createLinearGradient(0, 80, 0, 210); g.addColorStop(0, '#5db2ff'); g.addColorStop(1, '#d6f0ff');
+    c.fillStyle = g; c.fillRect(390, 80, 180, 130);
+    c.fillStyle = '#fff'; c.beginPath(); c.ellipse(430 + (t * 8 % 160), 120, 24, 10, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#6d4c41'; c.fillRect(478, 80, 6, 130); c.fillRect(390, 142, 180, 6);
+    c.fillStyle = '#ffb3c6'; c.fillRect(360, 60, 20, 170); c.fillRect(580, 60, 20, 170);
+    // floor
+    for (let y = GROUND_TOP; y < H; y += 28) { c.fillStyle = (y / 28) % 2 ? '#c8935a' : '#d7a36a'; c.fillRect(0, y, W, 28); c.fillStyle = 'rgba(0,0,0,.08)'; c.fillRect(0, y + 26, W, 2); }
+    c.fillStyle = '#7c3aed'; c.beginPath(); c.ellipse(480, 450, 180, 50, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#a855f7'; c.beginPath(); c.ellipse(480, 450, 140, 36, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#22223b'; c.font = '900 20px Rubik'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('הבית של ' + P.name, 150, 60);
+  },
+};
+
+/* ============================================================
+   NPC DIALOG
+   ============================================================ */
+function openNpc(id) {
+  const n = NPCS[id];
+  if (!P.talked.includes(id)) { P.talked.push(id); gainXp(10); save(); }
+  const box = openModal(`
+    <div class="npc-head"><div class="npc-face">${n.emoji}</div><div><h2>${esc(n.name)}</h2></div></div>
+    <div class="speech" id="npc-speech">${esc(pick(n.greet))}</div>
+    <div class="opts" id="npc-opts"></div>`);
+  const opts = box.querySelector('#npc-opts');
+  n.options.forEach(o => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = o.text;
+    b.onclick = () => { if (o.reply) showNpcReply(id, o.reply); if (o.action) o.action(); };
+    opts.appendChild(b);
+  });
+  const bye = document.createElement('button'); bye.className = 'btn small'; bye.textContent = 'להתראות'; bye.onclick = closeModal; opts.appendChild(bye);
+}
+function showNpcReply(id, text) {
+  const s = $('#npc-speech'); if (s) s.textContent = text;
+  npcBubbles[id] = { text: text.length > 40 ? text.slice(0, 38) + '…' : text, until: T + 4 };
+}
+
+/* ============================================================
+   SHOP / CLOSET
+   ============================================================ */
+let shopTab = 'hat';
+function openShop() {
+  const box = openModal(`<h2>🛍️ החנות</h2><div class="stat-row"><div class="stat">יש לך 🪙 ${P.cheat ? '∞' : P.coins}</div></div><div class="tabs" id="shop-tabs"></div><div class="grid" id="shop-grid"></div>`);
+  renderShop(box);
+}
+function renderShop(box) {
+  const tabs = box.querySelector('#shop-tabs'); tabs.innerHTML = '';
+  Object.entries(ITEM_TYPES).forEach(([k, v]) => {
+    const b = document.createElement('button'); b.className = 'tab' + (k === shopTab ? ' active' : ''); b.textContent = v;
+    b.onclick = () => { shopTab = k; renderShop(box); }; tabs.appendChild(b);
+  });
+  const grid = box.querySelector('#shop-grid'); grid.innerHTML = '';
+  ITEMS.filter(i => i.type === shopTab).forEach(i => {
+    const owned = P.owned.includes(i.id);
+    const d = document.createElement('div'); d.className = 'item' + (owned ? ' owned' : '');
+    d.innerHTML = `<div class="em">${i.emoji}</div><div class="nm">${esc(i.name)}</div><div class="pr">${owned ? 'ברשותך ✓' : '🪙 ' + i.price}</div>`;
+    const b = document.createElement('button'); b.className = 'btn small ' + (owned ? '' : 'primary');
+    if (owned) { b.textContent = 'בארון'; b.disabled = true; }
+    else {
+      b.textContent = 'קנה';
+      b.onclick = () => {
+        if (!spend(i.price)) return toast('אין מספיק מטבעות 🪙');
+        P.owned.push(i.id); gainXp(8); save();
+        toast(`קנית ${i.name}!`);
+        if (i.type === 'hat') P.hat = i.id; else if (i.type === 'glasses') P.glasses = i.id; else if (i.type === 'pet') P.pet = i.id;
+        save(); renderShop(box); box.querySelector('.stat').textContent = 'יש לך 🪙 ' + (P.cheat ? '∞' : P.coins);
+      };
+    }
+    d.appendChild(b); grid.appendChild(d);
+  });
+}
+function openCloset() {
+  const box = openModal(`<h2>🎒 הארון שלי</h2><p style="color:var(--muted);margin:0">לחץ על פריט כדי ללבוש או להסיר. רהיטים מניחים בבית.</p><div class="tabs" id="shop-tabs"></div><div class="grid" id="shop-grid"></div>`);
+  const render = () => {
+    const tabs = box.querySelector('#shop-tabs'); tabs.innerHTML = '';
+    Object.entries(ITEM_TYPES).forEach(([k, v]) => {
+      const b = document.createElement('button'); b.className = 'tab' + (k === shopTab ? ' active' : ''); b.textContent = v;
+      b.onclick = () => { shopTab = k; render(); }; tabs.appendChild(b);
+    });
+    const grid = box.querySelector('#shop-grid'); grid.innerHTML = '';
+    const list = ITEMS.filter(i => i.type === shopTab && P.owned.includes(i.id));
+    if (!list.length) { grid.innerHTML = '<div style="grid-column:1/-1;color:var(--muted);text-align:center;padding:20px">אין לך עדיין פריטים מהסוג הזה. קפוץ לחנות בקניון!</div>'; return; }
+    list.forEach(i => {
+      const on = P[i.type] === i.id;
+      const placed = i.type === 'furniture' && P.furniture.some(f => f.id === i.id);
+      const d = document.createElement('div'); d.className = 'item owned' + (on || placed ? ' on' : '');
+      d.innerHTML = `<div class="em">${i.emoji}</div><div class="nm">${esc(i.name)}</div>`;
+      const b = document.createElement('button'); b.className = 'btn small ' + (on || placed ? 'red' : 'green');
+      if (i.type === 'furniture') {
+        if (placed) { b.textContent = 'מונח בבית'; b.disabled = true; }
+        else { b.textContent = 'הנח בבית'; b.onclick = () => { closeModal(); placing = i.id; if (loc !== 'home') travel('home'); }; }
+      } else {
+        b.textContent = on ? 'הסר' : 'לבש';
+        b.onclick = () => { P[i.type] = on ? null : i.id; save(); render(); };
+      }
+      d.appendChild(b); grid.appendChild(d);
+    });
+  };
+  render();
+}
+function openDecor() { shopTab = 'furniture'; openCloset(); }
+
+/* ============================================================
+   MISSIONS / MAP / SETTINGS
+   ============================================================ */
+function openMissions() {
+  const box = openModal(`<h2>📜 משימות</h2><div id="mlist"></div>`);
+  const render = () => {
+    const list = box.querySelector('#mlist'); list.innerHTML = '';
+    MISSIONS.forEach(m => {
+      const claimed = P.claimed.includes(m.id), done = m.check(P);
+      const d = document.createElement('div'); d.className = 'mission' + (done ? ' done' : '') + (claimed ? ' claimed' : '');
+      d.innerHTML = `<div style="font-size:26px">${claimed ? '✅' : done ? '🎁' : '⏳'}</div><div class="mi"><div class="mt">${esc(m.name)}</div><div class="md">${esc(m.desc)}</div></div><div class="pr" style="font-weight:900">🪙 ${m.reward}</div>`;
+      if (done && !claimed) {
+        const b = document.createElement('button'); b.className = 'btn small green'; b.textContent = 'קבל פרס';
+        b.onclick = () => { P.claimed.push(m.id); gainCoins(m.reward); gainXp(20); render(); };
+        d.appendChild(b);
+      }
+      list.appendChild(d);
+    });
+  };
+  render();
+}
+function openMap() {
+  const box = openModal(`<h2>🗺️ מפת העולם</h2><div class="map" id="map"></div>`);
+  const m = box.querySelector('#map');
+  Object.entries(LOCATIONS).forEach(([k, L]) => {
+    const b = document.createElement('button'); b.style.background = L.color;
+    b.innerHTML = `<span>${L.icon}</span>${esc(L.name)}${k === loc ? ' (אתה כאן)' : ''}${P.visited.includes(k) ? '' : ' 🆕'}`;
+    b.onclick = () => { closeModal(); if (k !== loc) travel(k); };
+    m.appendChild(b);
+  });
+}
+function openSettings() {
+  const total = P.games.catch + P.games.memory + P.games.quiz;
+  const box = openModal(`
+    <h2>⚙️ הגדרות</h2>
+    <div class="stat-row"><div class="stat">רמה ${levelOf(P.xp)}</div><div class="stat">${P.xp} ניסיון</div><div class="stat">${total} משחקים</div><div class="stat">${P.owned.length} פריטים</div></div>
+    <h3>צבע המיקמק</h3><div class="swatches" id="set-swatches"></div>
+    <h3>חשבון</h3>
+    <div class="opts">
+      <button class="btn" id="set-logout">החלף מיקמק (יציאה)</button>
+      <button class="btn red" id="set-reset">מחק את המיקמק הזה</button>
+      <button class="btn small" id="set-admin" style="opacity:.6">🔒 מנהל</button>
+    </div>`);
+  const sw = box.querySelector('#set-swatches');
+  const renderSw = () => { sw.innerHTML = ''; COLORS.forEach(c => { const d = document.createElement('div'); d.className = 'swatch' + (c === P.color ? ' active' : ''); d.style.background = c; d.onclick = () => { P.color = c; save(); renderSw(); }; sw.appendChild(d); }); };
+  renderSw();
+  box.querySelector('#set-logout').onclick = () => { save(); location.reload(); };
+  box.querySelector('#set-reset').onclick = () => { if (confirm('למחוק את ' + P.name + ' לצמיתות?')) { delete users[P.name]; saveUsers(users); P = null; location.reload(); } };
+  box.querySelector('#set-admin').onclick = () => { const pw = prompt('סיסמת מנהל:'); if (pw === atob('bWlrbWFrMTIz')) openAdmin(); else if (pw !== null) toast('סיסמה שגויה'); };
+}
+function openAdmin() {
+  const box = openModal(`
+    <h2>🛠️ פאנל מנהל</h2>
+    <div class="admin-row"><label>מטבעות</label><input id="ad-coins" type="number" value="${P.coins}"><button class="btn small" id="ad-coins-b">עדכן</button></div>
+    <div class="admin-row"><label>ניסיון</label><input id="ad-xp" type="number" value="${P.xp}"><button class="btn small" id="ad-xp-b">עדכן</button></div>
+    <div class="admin-row">
+      <button class="btn small blue" id="ad-cheat">${P.cheat ? 'כבה' : 'הפעל'} מצב צ'יט (קניות חינם, מהירות)</button>
+      <button class="btn small green" id="ad-unlock">פתח את כל הפריטים</button>
+      <button class="btn small" id="ad-spin">אפס גלגל יומי</button>
+    </div>
+    <h3>כל המיקמקים בדפדפן הזה</h3>
+    <table><thead><tr><th>שם</th><th>מטבעות</th><th>רמה</th><th>פריטים</th><th></th></tr></thead><tbody id="ad-users"></tbody></table>`);
+  box.querySelector('#ad-coins-b').onclick = () => { P.coins = Math.max(0, parseInt(box.querySelector('#ad-coins').value) || 0); save(); toast('עודכן'); };
+  box.querySelector('#ad-xp-b').onclick = () => { P.xp = Math.max(0, parseInt(box.querySelector('#ad-xp').value) || 0); save(); toast('עודכן'); };
+  box.querySelector('#ad-cheat').onclick = () => { P.cheat = !P.cheat; save(); openAdmin(); };
+  box.querySelector('#ad-unlock').onclick = () => { P.owned = ITEMS.map(i => i.id); save(); toast('כל הפריטים נפתחו'); };
+  box.querySelector('#ad-spin').onclick = () => { P.lastSpin = null; save(); toast('הגלגל אופס'); };
+  const tb = box.querySelector('#ad-users');
+  Object.values(users).forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${esc(u.name)}</td><td>${u.coins}</td><td>${levelOf(u.xp || 0)}</td><td>${(u.owned || []).length}</td><td></td>`;
+    if (u.name !== P.name) { const b = document.createElement('button'); b.className = 'btn small red'; b.textContent = 'מחק'; b.onclick = () => { if (confirm('למחוק את ' + u.name + '?')) { delete users[u.name]; saveUsers(users); openAdmin(); } }; tr.lastElementChild.appendChild(b); }
+    tb.appendChild(tr);
+  });
+}
+$('#btn-map').onclick = openMap;
+$('#btn-bag').onclick = () => { shopTab = 'hat'; openCloset(); };
+$('#btn-missions').onclick = openMissions;
+$('#btn-settings').onclick = openSettings;
+
+/* ============================================================
+   MINI GAME: CATCH THE STARS
+   ============================================================ */
+function startCatchGame() {
+  const box = openModal(`
+    <div class="game-top"><span>⭐ תפוס את הכוכבים</span><span>ניקוד: <span id="cg-score">0</span></span><span>⏱ <span id="cg-time">30</span></span></div>
+    <canvas id="catch-canvas" width="600" height="400"></canvas>
+    <p style="color:var(--muted);font-size:13px;margin:8px 0 0;text-align:center">הזז את הסל עם העכבר / האצבע / החיצים. ⭐ = 10, 🌟 = 25, 💣 = -15</p>`);
+  const cv = box.querySelector('#catch-canvas'), c = cv.getContext('2d');
+  const CW = 600, CH = 400;
+  const st = { bx: 300, items: [], score: 0, time: 30, spawn: 0, raf: 0, last: performance.now(), over: false };
+  const ks = new Set();
+  const onKey = e => { if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code)) { e.preventDefault(); if (e.type === 'keydown') ks.add(e.code); else ks.delete(e.code); } };
+  const onMove = e => { const r = cv.getBoundingClientRect(); st.bx = clamp((e.clientX - r.left) / r.width * CW, 40, CW - 40); };
+  window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
+  cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerdown', onMove);
+  activeGame = { stop() { cancelAnimationFrame(st.raf); window.removeEventListener('keydown', onKey); window.removeEventListener('keyup', onKey); } };
+  const stars = Array.from({ length: 40 }, (_, i) => ({ x: (i * 173) % CW, y: (i * 97) % CH, r: 1 + (i % 3) }));
+  function loop(now) {
+    const dt = Math.min(.05, (now - st.last) / 1000); st.last = now;
+    if (ks.has('ArrowLeft') || ks.has('KeyA')) st.bx -= 420 * dt;
+    if (ks.has('ArrowRight') || ks.has('KeyD')) st.bx += 420 * dt;
+    st.bx = clamp(st.bx, 40, CW - 40);
+    st.time -= dt; st.spawn -= dt;
+    if (st.spawn <= 0) {
+      st.spawn = Math.max(.25, .7 - (30 - st.time) * .015);
+      const r = Math.random();
+      st.items.push({ x: rnd(20, CW - 20), y: -20, vy: rnd(130, 200) + (30 - st.time) * 4, type: r < .15 ? 'bomb' : r < .3 ? 'gold' : 'star' });
+    }
+    for (const it of st.items) it.y += it.vy * dt;
+    st.items = st.items.filter(it => {
+      if (it.y > CH - 40 && it.y < CH - 5 && Math.abs(it.x - st.bx) < 44) {
+        st.score += it.type === 'bomb' ? -15 : it.type === 'gold' ? 25 : 10;
+        if (st.score < 0) st.score = 0;
+        return false;
+      }
+      return it.y < CH + 20;
+    });
+    // draw
+    c.fillStyle = '#0b1b3a'; c.fillRect(0, 0, CW, CH);
+    c.fillStyle = '#fff'; for (const s of stars) { c.globalAlpha = .4 + Math.sin(now / 400 + s.x) * .3; c.beginPath(); c.arc(s.x, s.y, s.r, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1;
+    c.font = '30px sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (const it of st.items) c.fillText(it.type === 'bomb' ? '💣' : it.type === 'gold' ? '🌟' : '⭐', it.x, it.y);
+    c.font = '56px sans-serif'; c.fillText('🧺', st.bx, CH - 26);
+    $('#cg-score').textContent = st.score; $('#cg-time').textContent = Math.ceil(Math.max(0, st.time));
+    if (st.time <= 0) return finish();
+    st.raf = requestAnimationFrame(loop);
+  }
+  function finish() {
+    activeGame.stop(); activeGame = null;
+    P.games.catch++; save();
+    endGameScreen('⭐ תפוס את הכוכבים', st.score, Math.round(st.score), Math.round(st.score * 1.5), startCatchGame);
+  }
+  st.raf = requestAnimationFrame(loop);
+}
+
+function endGameScreen(title, scoreText, coins, xp, again) {
+  if (coins > 0) gainCoins(coins, true);
+  if (xp > 0) gainXp(xp);
+  save();
+  const box = openModal(`
+    <h2>${esc(title)}</h2>
+    <div class="result">הניקוד שלך: ${esc(String(scoreText))}</div>
+    <div class="stat-row" style="justify-content:center"><div class="stat">🪙 +${coins}</div><div class="stat">✨ +${xp} ניסיון</div></div>
+    <div class="opts" style="margin-top:14px"><button class="btn primary" id="eg-again">שחק שוב</button><button class="btn" id="eg-close">חזרה לעולם</button></div>`);
+  box.querySelector('#eg-again').onclick = again;
+  box.querySelector('#eg-close').onclick = closeModal;
+}
+
+/* ============================================================
+   MINI GAME: MEMORY
+   ============================================================ */
+function startMemory() {
+  const emojis = shuffle(['🍎', '🍌', '🍇', '🍓', '🍒', '🥝', '🍉', '🍍']);
+  const deck = shuffle(emojis.concat(emojis));
+  const box = openModal(`<div class="game-top"><span>🃏 משחק הזיכרון</span><span>זוגות: <span id="mm-pairs">0</span>/8</span><span>⏱ <span id="mm-time">0</span></span></div><div class="mem-grid" id="mm-grid"></div>`);
+  const grid = box.querySelector('#mm-grid');
+  let first = null, lock = false, pairs = 0, moves = 0;
+  const start = performance.now();
+  const timer = setInterval(() => { const el = $('#mm-time'); if (el) el.textContent = Math.floor((performance.now() - start) / 1000); }, 250);
+  activeGame = { stop() { clearInterval(timer); } };
+  deck.forEach((em, i) => {
+    const b = document.createElement('button'); b.className = 'card'; b.textContent = em; b.dataset.i = i;
+    b.onclick = () => {
+      if (lock || b.classList.contains('flip') || b.classList.contains('match')) return;
+      b.classList.add('flip');
+      if (!first) { first = b; return; }
+      moves++;
+      if (first.textContent === b.textContent) {
+        first.classList.add('match'); b.classList.add('match'); first = null; pairs++;
+        $('#mm-pairs').textContent = pairs;
+        if (pairs === 8) {
+          const secs = Math.round((performance.now() - start) / 1000);
+          clearInterval(timer); activeGame = null;
+          P.games.memory++; save();
+          const coins = Math.max(20, 130 - secs - moves);
+          setTimeout(() => endGameScreen('🃏 משחק הזיכרון', `${secs} שניות, ${moves} מהלכים`, coins, 40, startMemory), 500);
+        }
+      } else {
+        lock = true; const f = first; first = null;
+        setTimeout(() => { f.classList.remove('flip'); b.classList.remove('flip'); lock = false; }, 650);
+      }
+    };
+    grid.appendChild(b);
+  });
+}
+
+/* ============================================================
+   MINI GAME: QUIZ
+   ============================================================ */
+function startQuiz() {
+  const qs = shuffle(QUIZ).slice(0, 5);
+  let i = 0, correct = 0;
+  const box = openModal(`<div class="game-top"><span>🏫 חידון המורה רותי</span><span>שאלה <span id="qz-n">1</span>/5</span><span>✅ <span id="qz-c">0</span></span></div><div id="qz-body"></div>`);
+  activeGame = { stop() {} };
+  function show() {
+    const q = qs[i];
+    const body = box.querySelector('#qz-body');
+    body.innerHTML = `<div class="quiz-q">${esc(q.q)}</div><div class="quiz-opts" id="qz-opts"></div>`;
+    $('#qz-n').textContent = i + 1;
+    const opts = body.querySelector('#qz-opts');
+    shuffle(q.a).forEach(a => {
+      const b = document.createElement('button'); b.className = 'btn'; b.textContent = a;
+      b.onclick = () => {
+        opts.querySelectorAll('button').forEach(x => { x.disabled = true; if (x.textContent === q.a[0]) x.classList.add('ok'); });
+        if (a === q.a[0]) { correct++; $('#qz-c').textContent = correct; } else b.classList.add('bad');
+        setTimeout(() => { i++; if (i < 5) show(); else finish(); }, 900);
+      };
+      opts.appendChild(b);
+    });
+  }
+  function finish() {
+    activeGame = null;
+    P.games.quiz++; save();
+    const coins = correct * 15 + (correct === 5 ? 25 : 0);
+    endGameScreen('🏫 חידון', `${correct} מתוך 5 נכונות${correct === 5 ? ' - מושלם!' : ''}`, coins, correct * 12, startQuiz);
+  }
+  show();
+}
+
+/* ============================================================
+   WHEEL OF FORTUNE
+   ============================================================ */
+const WHEEL = [10, 20, 30, 50, 75, 100, 150, 300];
+function openWheel() {
+  const used = P.lastSpin === todayKey() && !P.cheat;
+  const box = openModal(`
+    <h2>🎡 גלגל המזל</h2>
+    <p style="margin:0;color:var(--muted)">סיבוב אחד ביום. בהצלחה!</p>
+    <div class="wheel-wrap"><div class="pointer"></div><div class="wheel" id="wheel">${WHEEL.map((v, i) => `<span style="transform:rotate(${i * 45 + 22.5}deg) translate(-50%, -112px) rotate(0deg)">${v}</span>`).join('')}</div></div>
+    <div class="result" id="wh-res" style="min-height:30px"></div>
+    <div class="opts"><button class="btn primary" id="wh-spin" ${used ? 'disabled' : ''}>${used ? 'כבר סובבת היום, חזור מחר' : 'סובב!'}</button></div>`);
+  const wheel = box.querySelector('#wheel');
+  box.querySelector('#wh-spin').onclick = function () {
+    this.disabled = true; this.textContent = 'מסתובב...';
+    const idx = Math.floor(Math.random() * WHEEL.length);
+    const angle = 360 * 5 + (360 - (idx * 45 + 22.5));
+    wheel.style.transform = `rotate(${angle}deg)`;
+    P.lastSpin = todayKey(); save();
+    activeGame = { stop() {} };
+    setTimeout(() => {
+      activeGame = null;
+      const v = WHEEL[idx];
+      box.querySelector('#wh-res').textContent = `זכית ב-${v} מטבעות! 🎉`;
+      gainCoins(v); gainXp(10);
+      this.textContent = 'נתראה מחר';
+    }, 3400);
+  };
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildSwatches();
+buildExisting();
+try { const last = localStorage.getItem(LAST_KEY); if (last && users[last]) { $('#login-name').value = last; loginColor = users[last].color || COLORS[0]; buildSwatches(); } } catch {}
+renderPreview();
+window.addEventListener('blur', () => keys.clear());
+</script>
+</body>
+</html>
