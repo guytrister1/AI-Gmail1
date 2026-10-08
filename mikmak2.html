@@ -87,9 +87,10 @@
   .note{font-size:12px;color:var(--muted);margin-top:14px;}
 
   /* ---------- Game ---------- */
-  #game{display:flex;flex-direction:column;align-items:center;padding:10px 12px 20px;gap:10px;}
+  #game{position:fixed;inset:0;overflow:hidden;}
   .hud{
-    width:100%;max-width:960px;background:rgba(255,255,255,.95);border-radius:18px;padding:8px 14px;
+    position:absolute;top:10px;left:50%;transform:translateX(-50%);z-index:5;
+    width:calc(100% - 24px);max-width:960px;background:rgba(255,255,255,.93);border-radius:18px;padding:8px 14px;
     display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;box-shadow:var(--shadow);
   }
   .hud-left{display:flex;align-items:center;gap:10px;min-width:200px;}
@@ -106,25 +107,27 @@
     box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);
   }
   .stage{
-    position:relative;width:100%;max-width:960px;aspect-ratio:16/9;border-radius:18px;overflow:hidden;
-    box-shadow:var(--shadow);background:#000;user-select:none;
+    position:absolute;inset:0;width:100%;height:100%;overflow:hidden;
+    background:linear-gradient(160deg,var(--bg1),var(--bg2));user-select:none;
   }
-  #world{width:100%;height:100%;display:block;cursor:pointer;touch-action:none;}
+  #world{width:100%;height:100%;display:block;object-fit:contain;cursor:pointer;touch-action:none;}
   #fade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .35s;}
   #hint{
-    position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;
+    position:absolute;bottom:84px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;
     padding:6px 14px;border-radius:999px;font-size:13px;font-weight:700;pointer-events:none;opacity:0;transition:opacity .2s;
     white-space:nowrap;
   }
   #hint.on{opacity:1;}
   .chatbar{
-    width:100%;max-width:960px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    position:absolute;bottom:14px;left:50%;transform:translateX(-50%);z-index:5;
+    width:calc(100% - 24px);max-width:960px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+    background:rgba(255,255,255,.93);border-radius:18px;padding:8px 10px;box-shadow:var(--shadow);
   }
   .chatbar input{
-    flex:1;min-width:180px;padding:10px 14px;border-radius:14px;border:2px solid transparent;font-size:15px;outline:none;
+    flex:1;min-width:180px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);font-size:15px;outline:none;
   }
   .chatbar input:focus{border-color:var(--yellow);}
-  .controls-hint{color:rgba(255,255,255,.85);font-size:12px;font-weight:500;}
+  .controls-hint{color:var(--muted);font-size:12px;font-weight:500;}
   .dpad{display:none;gap:6px;}
   .dpad button{width:44px;height:44px;border-radius:12px;font-size:18px;}
   @media (pointer:coarse){ .dpad{display:flex;} .controls-hint{display:none;} }
@@ -273,9 +276,9 @@
       <button class="btn" data-dir="ArrowUp">▲</button>
       <button class="btn" data-dir="ArrowDown">▼</button>
       <button class="btn" data-dir="ArrowLeft">◀</button>
-      <button class="btn green" data-dir="KeyE">E</button>
+      <button class="btn green" data-dir="Action">פעולה</button>
     </div>
-    <span class="controls-hint">חיצים / WASD לתנועה · E או רווח לפעולה · לחיצה על המסך כדי ללכת</span>
+    <span class="controls-hint">חיצים לתנועה · לחיצה עם העכבר על דמות או חפץ כדי לפעול</span>
   </div>
 </div>
 
@@ -728,26 +731,26 @@ function sayBubble(ent, text) { ent.bubble = { text, until: T + 4 }; }
 window.addEventListener('keydown', e => {
   if (modalOpen) { if (e.code === 'Escape' && !activeGame) closeModal(); return; }
   if (document.activeElement === $('#chat')) return;
-  const codes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD', 'Space', 'KeyE'];
+  const codes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
   if (codes.includes(e.code)) {
     e.preventDefault();
     keys.add(e.code);
-    if (e.code === 'Space' || e.code === 'KeyE') tryInteract();
-    else { player.target = null; player.pendingInteract = null; }
+    player.target = null; player.pendingInteract = null;
   }
-  if (e.code === 'Enter' && !modalOpen) $('#chat').focus();
 });
 window.addEventListener('keyup', e => keys.delete(e.code));
 document.querySelectorAll('.dpad button').forEach(b => {
   const code = b.dataset.dir;
-  const down = e => { e.preventDefault(); if (code === 'KeyE') tryInteract(); else { keys.add(code); player.target = null; } };
+  const down = e => { e.preventDefault(); if (code === 'Action') tryInteract(); else { keys.add(code); player.target = null; } };
   const up = e => { e.preventDefault(); keys.delete(code); };
   b.addEventListener('pointerdown', down); b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('pointerleave', up);
 });
 
 function canvasPoint(e) {
   const r = canvas.getBoundingClientRect();
-  return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H };
+  const sc = Math.min(r.width / W, r.height / H);
+  const ox = (r.width - W * sc) / 2, oy = (r.height - H * sc) / 2;
+  return { x: (e.clientX - r.left - ox) / sc, y: (e.clientY - r.top - oy) / sc };
 }
 canvas.addEventListener('pointerdown', e => {
   if (modalOpen || transitioning) return;
@@ -846,10 +849,10 @@ function update(dt) {
   if (modalOpen || transitioning) { player.walkT = 0; return; }
   const speed = (P.cheat ? 380 : 230) * dt;
   let dx = 0, dy = 0;
-  if (keys.has('ArrowLeft') || keys.has('KeyA')) dx -= 1;
-  if (keys.has('ArrowRight') || keys.has('KeyD')) dx += 1;
-  if (keys.has('ArrowUp') || keys.has('KeyW')) dy -= 1;
-  if (keys.has('ArrowDown') || keys.has('KeyS')) dy += 1;
+  if (keys.has('ArrowLeft')) dx -= 1;
+  if (keys.has('ArrowRight')) dx += 1;
+  if (keys.has('ArrowUp')) dy -= 1;
+  if (keys.has('ArrowDown')) dy += 1;
   if (dx || dy) {
     const len = Math.hypot(dx, dy); dx /= len; dy /= len;
     player.x += dx * speed; player.y += dy * speed * .75;
@@ -880,7 +883,7 @@ function update(dt) {
   const near = nearestThing();
   const hint = $('#hint');
   if (placing) { hint.textContent = 'לחץ על המסך כדי להניח את הרהיט'; hint.classList.add('on'); }
-  else if (near) { hint.textContent = (near.kind === 'npc' ? 'דבר עם ' + NPCS[near.id].name : near.label) + ' (E)'; hint.classList.add('on'); }
+  else if (near) { hint.textContent = 'לחץ על ' + (near.kind === 'npc' ? NPCS[near.id].name : near.label); hint.classList.add('on'); }
   else hint.classList.remove('on');
 }
 
@@ -1241,9 +1244,9 @@ function startCatchGame() {
     <p style="color:var(--muted);font-size:13px;margin:8px 0 0;text-align:center">הזז את הסל עם העכבר / האצבע / החיצים. ⭐ = 10, 🌟 = 25, 💣 = -15</p>`);
   const cv = box.querySelector('#catch-canvas'), c = cv.getContext('2d');
   const CW = 600, CH = 400;
-  const st = { bx: 300, items: [], score: 0, time: 30, spawn: 0, raf: 0, last: performance.now(), over: false };
+  const st = { bx: 300, items: [], score: 0, time: 30, spawn: 0, raf: 0, last: performance.now(), start: performance.now(), over: false };
   const ks = new Set();
-  const onKey = e => { if (['ArrowLeft', 'ArrowRight', 'KeyA', 'KeyD'].includes(e.code)) { e.preventDefault(); if (e.type === 'keydown') ks.add(e.code); else ks.delete(e.code); } };
+  const onKey = e => { if (['ArrowLeft', 'ArrowRight'].includes(e.code)) { e.preventDefault(); if (e.type === 'keydown') ks.add(e.code); else ks.delete(e.code); } };
   const onMove = e => { const r = cv.getBoundingClientRect(); st.bx = clamp((e.clientX - r.left) / r.width * CW, 40, CW - 40); };
   window.addEventListener('keydown', onKey); window.addEventListener('keyup', onKey);
   cv.addEventListener('pointermove', onMove); cv.addEventListener('pointerdown', onMove);
@@ -1251,10 +1254,10 @@ function startCatchGame() {
   const stars = Array.from({ length: 40 }, (_, i) => ({ x: (i * 173) % CW, y: (i * 97) % CH, r: 1 + (i % 3) }));
   function loop(now) {
     const dt = Math.min(.05, (now - st.last) / 1000); st.last = now;
-    if (ks.has('ArrowLeft') || ks.has('KeyA')) st.bx -= 420 * dt;
-    if (ks.has('ArrowRight') || ks.has('KeyD')) st.bx += 420 * dt;
+    if (ks.has('ArrowLeft')) st.bx -= 420 * dt;
+    if (ks.has('ArrowRight')) st.bx += 420 * dt;
     st.bx = clamp(st.bx, 40, CW - 40);
-    st.time -= dt; st.spawn -= dt;
+    st.time = 30 - (now - st.start) / 1000; st.spawn -= dt;
     if (st.spawn <= 0) {
       st.spawn = Math.max(.25, .7 - (30 - st.time) * .015);
       const r = Math.random();
