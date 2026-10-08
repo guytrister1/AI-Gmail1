@@ -314,6 +314,15 @@ const ITEMS = [
   { id: 'nerd', type: 'glasses', name: 'משקפיים', emoji: '👓', price: 50 },
   { id: 'sun', type: 'glasses', name: 'משקפי שמש', emoji: '🕶️', price: 80 },
   { id: 'goggles', type: 'glasses', name: 'משקפת', emoji: '🥽', price: 110 },
+  { id: 'tshirt', type: 'top', name: 'חולצה אדומה', emoji: '👕', price: 80, cloth: { color: '#e5484d' } },
+  { id: 'stripes', type: 'top', name: 'חולצת פסים', emoji: '👚', price: 110, cloth: { color: '#2f6fd6', stripe: '#ffffff' } },
+  { id: 'jersey', type: 'top', name: 'חולצת כדורגל', emoji: '⚽', price: 160, cloth: { color: '#ffd23f', text: '10', ink: '#1d7a3a' } },
+  { id: 'hero', type: 'top', name: 'חולצת גיבור', emoji: '🦸', price: 200, cloth: { color: '#3355dd', text: '★', ink: '#ffd23f' } },
+  { id: 'tux', type: 'top', name: 'חליפה', emoji: '🤵', price: 300, cloth: { color: '#26262e', tux: true } },
+  { id: 'dress', type: 'top', name: 'שמלה ורודה', emoji: '👗', price: 180, cloth: { color: '#f27bb5', stripe: '#ffd6ea', full: true } },
+  { id: 'shorts', type: 'bottom', name: 'מכנסיים קצרים', emoji: '🩳', price: 70, cloth: { color: '#3aa76d', short: true } },
+  { id: 'jeans', type: 'bottom', name: 'ג\'ינס', emoji: '👖', price: 90, cloth: { color: '#3b5f9e' } },
+  { id: 'slacks', type: 'bottom', name: 'מכנסי חליפה', emoji: '🕴️', price: 120, cloth: { color: '#2b2b33' } },
   { id: 'dog', type: 'pet', name: 'כלבלב', emoji: '🐶', price: 150 },
   { id: 'cat', type: 'pet', name: 'חתלתול', emoji: '🐱', price: 150 },
   { id: 'rabbit', type: 'pet', name: 'ארנבון', emoji: '🐰', price: 200 },
@@ -332,7 +341,7 @@ const ITEMS = [
   { id: 'console', type: 'furniture', name: 'קונסולה', emoji: '🎮', price: 220 },
   { id: 'aquarium', type: 'furniture', name: 'אקווריום', emoji: '🐠', price: 260 },
 ];
-const ITEM_TYPES = { hat: 'כובעים', glasses: 'משקפיים', pet: 'חיות מחמד', furniture: 'רהיטים' };
+const ITEM_TYPES = { hat: 'כובעים', glasses: 'משקפיים', top: 'חולצות', bottom: 'מכנסיים', pet: 'חיות מחמד', furniture: 'רהיטים' };
 const itemById = id => ITEMS.find(i => i.id === id);
 
 /* Character sprite sheet (8 views) embedded as PNG data URIs */
@@ -510,7 +519,7 @@ let P = null;
 
 function newProfile(name, color) {
   return {
-    name, color, hat: null, glasses: null, pet: null,
+    name, color, hat: null, glasses: null, top: null, bottom: null, pet: null,
     coins: 100, xp: 0, owned: [], furniture: [],
     visited: ['city'], talked: [], games: { catch: 0, memory: 0, quiz: 0 },
     claimed: [], icecreams: 0, lastDaily: null, lastSpin: null,
@@ -616,6 +625,86 @@ function avatarFilter(color) {
   const sat = Math.max(r, g, b) - Math.min(r, g, b);
   return `hue-rotate(${Math.round(hueOf(color) - BASE_HUE)}deg) saturate(${(1 + sat * 1.6).toFixed(2)})`;
 }
+// Clothes are painted inside the sprite's own silhouette, so they follow the body in every view.
+// The sprite is multiplied back on top in grayscale so its outlines and shading show through the fabric.
+const bodyCache = [];
+function bodyShape(i) {
+  if (bodyCache[i]) return bodyCache[i];
+  const im = SPRITE_IMGS[i], w = im.naturalWidth, h = im.naturalHeight;
+  const c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.drawImage(im, 0, 0);
+  const a = g.getImageData(0, 0, w, h).data;
+  const span = y => { let l = -1, r = -1; for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3] > 40) { if (l < 0) l = x; r = x; } return [l, r]; };
+  let neck = Math.round(h * 0.55), best = w;
+  for (let y = Math.round(h * 0.45); y < h * 0.68; y++) { const [l, r] = span(y); if (l >= 0 && r - l < best) { best = r - l; neck = y; } }
+  const [tl, tr] = span(Math.round(h * 0.86));
+  const m = Math.round(w * 0.055);
+  return (bodyCache[i] = { w, h, neck: neck + 2, torso: [tl - m, tr + m] });
+}
+const dressedCache = new Map();
+function dressedSprite(i, dir, color, top, bottom) {
+  const key = [i, color, top && top.id, bottom && bottom.id].join('|');
+  if (dressedCache.has(key)) return dressedCache.get(key);
+  const im = SPRITE_IMGS[i], b = bodyShape(i), { w, h } = b;
+  const out = document.createElement('canvas'); out.width = w; out.height = h;
+  const g = out.getContext('2d');
+  g.filter = avatarFilter(color); g.drawImage(im, 0, 0); g.filter = 'none';
+  const waist = Math.round(h * 0.77), front = ['front', 'fl', 'fr'].includes(dir);
+  const cx = (b.torso[0] + b.torso[1]) / 2 + ({ fl: -0.08, fr: 0.06, left: -0.12, right: 0.12 }[dir] || 0) * w;
+  if (bottom && !(top && top.cloth.full)) {
+    const c = bottom.cloth;
+    paintCloth(g, im, w, h, c, ctx2 => ctx2.rect(b.torso[0], waist - 4, b.torso[1] - b.torso[0], (c.short ? h * 0.9 : h * 0.96) - waist + 4));
+  }
+  if (top) {
+    const c = top.cloth, sleeve = Math.round(h * 0.08);
+    paintCloth(g, im, w, h, c, ctx2 => {
+      ctx2.rect(0, b.neck, w, sleeve);
+      ctx2.rect(b.torso[0], b.neck, b.torso[1] - b.torso[0], waist + 3 - b.neck);
+    }, front && (cl => {
+      const y = b.neck + (waist - b.neck) * 0.42;
+      if (c.tux) {
+        cl.fillStyle = '#fff'; cl.beginPath(); cl.moveTo(cx - w * 0.09, b.neck); cl.lineTo(cx + w * 0.09, b.neck); cl.lineTo(cx, b.neck + (waist - b.neck) * 0.7); cl.fill();
+        cl.fillStyle = '#d6303a'; cl.beginPath(); cl.ellipse(cx - 9, b.neck + 9, 9, 6, 0, 0, Math.PI * 2); cl.ellipse(cx + 9, b.neck + 9, 9, 6, 0, 0, Math.PI * 2); cl.fill();
+      }
+      if (c.text) {
+        cl.fillStyle = c.ink; cl.textAlign = 'center'; cl.textBaseline = 'middle';
+        cl.font = `900 ${Math.round(h * 0.12)}px Rubik, sans-serif`; cl.fillText(c.text, cx, y);
+      }
+    }));
+  }
+  if (top && top.cloth.full) {
+    // A flared skirt drawn over the hips, wider than the body
+    const c = top.cloth, l = b.torso[0], r = b.torso[1], y0 = waist - 2, y1 = h * 0.89, f = (r - l) * 0.16;
+    g.save();
+    g.beginPath(); g.moveTo(l + 4, y0); g.lineTo(r - 4, y0); g.lineTo(r + f, y1);
+    g.quadraticCurveTo((l + r) / 2, y1 + 10, l - f, y1); g.closePath();
+    g.fillStyle = c.color; g.fill();
+    g.clip();
+    if (c.stripe) { g.fillStyle = c.stripe; for (let y = y0 + 6; y < y1 + 10; y += 18) g.fillRect(0, y, w, 6); }
+    g.restore();
+    g.lineWidth = 3; g.strokeStyle = '#3a2420'; g.stroke();
+  }
+  if (dressedCache.size > 300) dressedCache.clear();
+  dressedCache.set(key, out);
+  return out;
+}
+function paintCloth(g, im, w, h, c, region, extra) {
+  const l = document.createElement('canvas'); l.width = w; l.height = h;
+  const x = l.getContext('2d');
+  x.drawImage(im, 0, 0);
+  x.globalCompositeOperation = 'source-in';
+  x.fillStyle = c.color; x.fillRect(0, 0, w, h);
+  x.globalCompositeOperation = 'source-atop';
+  if (c.stripe) { x.fillStyle = c.stripe; for (let y = 0; y < h; y += 18) x.fillRect(0, y, w, 8); }
+  if (extra) extra(x);
+  x.globalCompositeOperation = 'multiply';
+  x.filter = 'grayscale(1) brightness(1.3) contrast(1.8)';
+  x.drawImage(im, 0, 0);
+  x.filter = 'none';
+  x.globalCompositeOperation = 'destination-in';
+  x.fillStyle = '#000'; x.beginPath(); region(x); x.fill();
+  g.drawImage(l, 0, 0);
+}
 // Worn items: each emoji is rendered once at high resolution, trimmed, and drawn sized to the head.
 // Units match the sprite drawn at AVATAR_H (head top at -120, head about 72 wide, eyes at -79).
 const EYES = { front: { x: 0, w: 62 }, fl: { x: -7, w: 52 }, fr: { x: 5, w: 52 }, left: { x: -18, w: 34 }, right: { x: 23, w: 34 } };
@@ -678,9 +767,13 @@ function drawAvatar(ctx, x, y, p, scale, dir, walkT, t, opts = {}) {
   const img = SPRITE_IMGS[SPRITE_DIR[dir] ?? 4];
   if (img.complete && img.naturalWidth) {
     const h = AVATAR_H, w = img.naturalWidth / img.naturalHeight * h;
-    ctx.filter = avatarFilter(p.color);
-    ctx.drawImage(img, -w / 2, -h, w, h);
-    ctx.filter = 'none';
+    const top = p.top && itemById(p.top), bottom = p.bottom && itemById(p.bottom);
+    if (top || bottom) ctx.drawImage(dressedSprite(SPRITE_DIR[dir] ?? 4, dir, p.color, top, bottom), -w / 2, -h, w, h);
+    else {
+      ctx.filter = avatarFilter(p.color);
+      ctx.drawImage(img, -w / 2, -h, w, h);
+      ctx.filter = 'none';
+    }
   }
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const eyes = EYES[dir];
@@ -1167,7 +1260,8 @@ function renderShop(box) {
   ITEMS.filter(i => i.type === shopTab).forEach(i => {
     const owned = P.owned.includes(i.id);
     const d = document.createElement('div'); d.className = 'item' + (owned ? ' owned' : '');
-    d.innerHTML = `<div class="em">${i.emoji}</div><div class="nm">${esc(i.name)}</div><div class="pr">${owned ? 'ברשותך ✓' : '🪙 ' + i.price}</div>`;
+    d.innerHTML = `<div class="em">${i.cloth ? '' : i.emoji}</div><div class="nm">${esc(i.name)}</div><div class="pr">${owned ? 'ברשותך ✓' : '🪙 ' + i.price}</div>`;
+    if (i.cloth) d.querySelector('.em').appendChild(clothPreview(i));
     const b = document.createElement('button'); b.className = 'btn small ' + (owned ? '' : 'primary');
     if (owned) { b.textContent = 'בארון'; b.disabled = true; }
     else {
@@ -1176,12 +1270,20 @@ function renderShop(box) {
         if (!spend(i.price)) return toast('אין מספיק מטבעות 🪙');
         P.owned.push(i.id); gainXp(8); save();
         toast(`קנית ${i.name}!`);
-        if (i.type === 'hat') P.hat = i.id; else if (i.type === 'glasses') P.glasses = i.id; else if (i.type === 'pet') P.pet = i.id;
+        if (i.type !== 'furniture') P[i.type] = i.id;
         save(); renderShop(box); box.querySelector('.stat').textContent = 'יש לך 🪙 ' + (P.cheat ? '∞' : P.coins);
       };
     }
     d.appendChild(b); grid.appendChild(d);
   });
+}
+// Small picture of the player's mikmak wearing a clothing item, for the shop and closet
+function clothPreview(i) {
+  const c = document.createElement('canvas'), k = 2;
+  c.width = 84 * k; c.height = 90 * k; c.style.width = '84px'; c.style.height = '90px';
+  const g = c.getContext('2d'); g.scale(k, k);
+  drawAvatar(g, 42, 88, { name: '', color: P.color, [i.type]: i.id }, 0.72, 'front', 0, 0, { noName: true });
+  return c;
 }
 function openCloset() {
   const box = openModal(`<h2>🎒 הארון שלי</h2><p style="color:var(--muted);margin:0">לחץ על פריט כדי ללבוש או להסיר. רהיטים מניחים בבית.</p><div class="tabs" id="shop-tabs"></div><div class="grid" id="shop-grid"></div>`);
@@ -1198,7 +1300,8 @@ function openCloset() {
       const on = P[i.type] === i.id;
       const placed = i.type === 'furniture' && P.furniture.some(f => f.id === i.id);
       const d = document.createElement('div'); d.className = 'item owned' + (on || placed ? ' on' : '');
-      d.innerHTML = `<div class="em">${i.emoji}</div><div class="nm">${esc(i.name)}</div>`;
+      d.innerHTML = `<div class="em">${i.cloth ? '' : i.emoji}</div><div class="nm">${esc(i.name)}</div>`;
+      if (i.cloth) d.querySelector('.em').appendChild(clothPreview(i));
       const b = document.createElement('button'); b.className = 'btn small ' + (on || placed ? 'red' : 'green');
       if (i.type === 'furniture') {
         if (placed) { b.textContent = 'מונח בבית'; b.disabled = true; }
