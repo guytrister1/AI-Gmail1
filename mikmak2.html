@@ -889,8 +889,10 @@ window.addEventListener('keyup', e => keys.delete(e.code));
 let codeBuf = '';
 window.addEventListener('keydown', e => {
   if (!P || !running || /^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName)) return;
-  if (!/^[0-9]$/.test(e.key)) { codeBuf = ''; return; }
-  codeBuf = (codeBuf + e.key).slice(-4);
+  // Read the physical key so the number row and the numpad both work, even with NumLock off
+  const m = /^(?:Digit|Numpad)([0-9])$/.exec(e.code) || /^([0-9])$/.exec(e.key);
+  if (!m) return;
+  codeBuf = (codeBuf + m[1]).slice(-4);
   if (codeBuf === '1201') { codeBuf = ''; openAdmin(); }
 });
 document.querySelectorAll('.dpad button').forEach(b => {
